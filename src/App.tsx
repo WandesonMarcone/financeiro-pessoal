@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { Access, Gateway, Ready } from './access';
+import {FinanceApp} from './FinanceApp';
 type View=Access|{kind:'loading'}|{kind:'error'};
 export function App({gateway}:{gateway:Gateway|null}) {
  const [view,setView]=useState<View>({kind:'loading'});
@@ -30,7 +31,9 @@ export function App({gateway}:{gateway:Gateway|null}) {
   {!gateway ? <section className="card"><h1>Em preparação</h1><p>O acesso ainda está sendo configurado. Volte em breve.</p></section> :
    view.kind==='loading'? <section className="card" role="status"><h1>Verificando acesso…</h1><p>Aguarde um instante.</p></section> :
    view.kind==='signedout'? <Login gateway={gateway} onSuccess={retry}/> :
-   view.kind==='ready'? <Profile key={view.userId} gateway={gateway} access={view} onRefresh={retry} onLock={()=>setView({kind:'loading'})}/> :
+   view.kind==='ready'? gateway.finance
+    ? <FinanceApp key={view.userId} api={gateway.finance} access={view} profile={<Profile gateway={gateway} access={view} onRefresh={retry} onLock={()=>setView({kind:'loading'})}/>}/>
+    : <Profile key={view.userId} gateway={gateway} access={view} onRefresh={retry} onLock={()=>setView({kind:'loading'})}/> :
    <section className="card"><h1>{view.kind==='denied'?'Acesso não autorizado':'Não foi possível verificar seu acesso'}</h1><p>{view.kind==='denied'?'Esta conta não possui um convite ativo para a família.':'Confira sua conexão e tente novamente.'}</p><button onClick={retry}>Tentar novamente</button><Logout gateway={gateway} onLock={()=>setView({kind:'loading'})} onDone={retry}/></section>}
   <footer>Acesso exclusivo aos membros autorizados da família.</footer>
  </main>;
@@ -45,7 +48,7 @@ function Login({gateway,onSuccess}:{gateway:Gateway;onSuccess:()=>void}){
 }
 function Logout({gateway,onLock,onDone}:{gateway:Gateway;onLock:()=>void;onDone:()=>void}){
  const [error,setError]=useState('');
- return <><button className="secondary" onClick={async()=>{setError('');try{await gateway.signOut();onLock();onDone();}catch{setError('Não foi possível sair. Tente novamente.');}}}>Sair</button>{error&&<p role="alert">{error}</p>}</>;
+ return <><button className="secondary" onClick={async()=>{setError('');try{await gateway.signOut();onLock();onDone();}catch(e){setError(e instanceof Error?e.message:'Não foi possível sair. Tente novamente.');}}}>Sair e limpar este aparelho</button>{error&&<p role="alert">{error}</p>}</>;
 }
 function Profile({gateway,access,onRefresh,onLock}:{gateway:Gateway;access:Ready;onRefresh:()=>void;onLock:()=>void}){
  const [name,setName]=useState(access.displayName),[busy,setBusy]=useState(false),[notice,setNotice]=useState('');
@@ -55,6 +58,6 @@ function Profile({gateway,access,onRefresh,onLock}:{gateway:Gateway;access:Ready
   if(current.kind!=='ready'||current.userId!==access.userId){onLock();onRefresh();return;}
   await gateway.saveProfile(access.userId,name.trim());if(alive.current)setNotice('Seu nome foi salvo.');
  }catch{if(alive.current)setNotice('Não foi possível salvar. Verifique seu acesso e tente novamente.');}finally{if(alive.current)setBusy(false);}}
- return <section className="card"><p className="eyebrow">SUA FAMÍLIA</p><h1>{access.householdName}</h1><p>Seu acesso está ativo. Você pode configurar seu nome abaixo.</p><form onSubmit={save}><label htmlFor="name">Como você quer ser chamado?</label><input id="name" required maxLength={100} value={name} onChange={e=>setName(e.target.value)}/><button disabled={busy||!name.trim()}>{busy?'Salvando…':'Salvar meu nome'}</button></form>{notice&&<p role="status">{notice}</p>}<aside>Os recursos financeiros estão em construção. Os lançamentos serão disponibilizados após os testes.</aside><Logout gateway={gateway} onLock={onLock} onDone={onRefresh}/></section>;
+ return <section className="card"><p className="eyebrow">SUA FAMÍLIA</p><h1>{access.householdName}</h1><p>Seu acesso está ativo. Você pode configurar seu nome abaixo.</p><form onSubmit={save}><label htmlFor="name">Como você quer ser chamado?</label><input id="name" required maxLength={100} value={name} onChange={e=>setName(e.target.value)}/><button disabled={busy||!name.trim()}>{busy?'Salvando…':'Salvar meu nome'}</button></form>{notice&&<p role="status">{notice}</p>}<Logout gateway={gateway} onLock={onLock} onDone={onRefresh}/></section>;
 }
 

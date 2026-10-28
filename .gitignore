@@ -11,8 +11,11 @@ __pycache__/
 /dist/
 /build/
 /coverage/
+/public/tesseract/
+/supabase/.temp/
 *.log
 
 # Sistema operacional
 .DS_Store
 Thumbs.db
+

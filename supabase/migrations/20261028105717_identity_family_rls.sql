@@ -64,3 +64,4 @@ revoke all on public.households, public.profiles, public.memberships from anon, 
 grant select on public.households to authenticated;
 grant select, insert, update (display_name) on public.profiles to authenticated;
 grant select on public.memberships to authenticated;
+
