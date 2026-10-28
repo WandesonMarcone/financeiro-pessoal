@@ -1,12 +1,14 @@
 import Dexie,{type Table} from 'dexie';
 import type {Snapshot} from './domain';
 export type Pending={id:string;userId:string;householdId:string;payload:any;createdAt:number;error?:string};
+export type UploadDraft={id:string;userId:string;file:Blob;filename:string;mimeType:string;scope:string;createdAt:number};
 class LocalDB extends Dexie{
- outbox!:Table<Pending,string>; snapshots!:Table<{id:string;data:Snapshot},string>;
- constructor(){super('nossa-casa-v1');this.version(1).stores({outbox:'id,userId,householdId,createdAt',snapshots:'id'});}
+ outbox!:Table<Pending,string>; snapshots!:Table<{id:string;data:Snapshot},string>; uploadDrafts!:Table<UploadDraft,string>;
+ constructor(){super('nossa-casa-v1');this.version(1).stores({outbox:'id,userId,householdId,createdAt',snapshots:'id'});this.version(2).stores({outbox:'id,userId,householdId,createdAt',snapshots:'id',uploadDrafts:'id,userId,createdAt'});}
 }
 export const localDB=new LocalDB();
 export const cacheId=(u:string,h:string)=>u+':'+h;
+export const uploadDraftId=(u:string)=>`upload:${u}`;
 export async function enqueue(userId:string,householdId:string,payload:any,id:string=crypto.randomUUID()){await localDB.outbox.put({id,userId,householdId,payload,createdAt:Date.now()});return id;}
 export const pendingFor=(userId:string)=>localDB.outbox.where('userId').equals(userId).sortBy('createdAt');
 export async function syncPending(userId:string,post:(id:string,payload:any)=>Promise<void>){

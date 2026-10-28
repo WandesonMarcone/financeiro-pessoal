@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {financeAPI,type FinanceAPI} from './finance';
-import {localDB,pendingFor} from './offline';
+import {localDB,pendingFor,uploadDraftId} from './offline';
 import type {Database} from './database.types';
 export type Ready = {kind:'ready'; userId:string; householdId:string; householdName:string; displayName:string};
 export type Access = {kind:'signedout'} | {kind:'denied'} | Ready;
@@ -52,10 +52,11 @@ export function supabaseGateway(client:SupabaseClient<Database>):Gateway {
    const access=lastAccess;
    if(access&&(await pendingFor(access.userId)).length)throw Error('Sincronize, exporte ou descarte os lançamentos pendentes antes de sair.');
    if(access){
-    await localDB.transaction('rw',localDB.outbox,localDB.snapshots,async()=>{
+    await localDB.transaction('rw',localDB.outbox,localDB.snapshots,localDB.uploadDrafts,async()=>{
      await localDB.outbox.where('userId').equals(access.userId).delete();
      const snapshots=await localDB.snapshots.filter(row=>row.id.startsWith(access.userId+':')).primaryKeys();
      await localDB.snapshots.bulkDelete(snapshots);
+     await localDB.uploadDrafts.delete(uploadDraftId(access.userId));
     });
     localStorage.removeItem('simple:'+access.userId);
    }
