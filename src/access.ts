@@ -46,7 +46,7 @@ export function supabaseGateway(client:SupabaseClient<Database>):Gateway {
    return ()=>data.subscription.unsubscribe();
   },
   async signIn(email,password){const {error}=await client.auth.signInWithPassword({email,password});if(error) throw error;},
-  async requestPasswordReset(email){const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});if(error)throw error;},
+  async requestPasswordReset(email){const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:new URL(import.meta.env.BASE_URL,window.location.origin).toString()});if(error)throw error;},
   async updatePassword(password){const {error}=await client.auth.updateUser({password});if(error)throw error;const out=await client.auth.signOut({scope:'local'});if(out.error)throw out.error;},
   async signOut(){
    const access=lastAccess;
