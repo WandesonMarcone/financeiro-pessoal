@@ -8,6 +8,7 @@ import {TransactionForm} from './TransactionForm';
 import {downloadBlob,exportData,exportReport,parseCSV} from './exports';
 import {checksum,readQR,recognize} from './receipts';
 import {enableNotifications,notificationsAvailable,notifyDueItems} from './notifications';
+import {SetupGuide,seededCategoryRows} from './onboarding';
 const labels:Record<string,string>={dashboard:'Visão geral',transactions:'Lançamentos',accounts:'Contas',cards:'Cartões',due_items:'Contas a vencer',shopping_items:'Lista de compras',documents:'Notas e documentos',budgets:'Orçamentos',goals:'Metas e reservas',assets:'Patrimônio',receipt_items:'Produtos e preços',reports:'Relatórios',recurring_rules:'Recorrências',categories:'Categorias',sync:'Sincronização',profile:'Meu perfil',audit_events:'Histórico'};
 const baseFields:Record<string,Field[]>={
  accounts:[{key:'name',label:'Nome da conta'},{key:'opening_cents',label:'Saldo inicial (R$)',type:'money',default:'0'}],
@@ -55,6 +56,12 @@ export function FinanceApp({api,access,profile}:{api:FinanceAPI;access:Ready;pro
   const record=row?{id:row.id,...values}:{id:crypto.randomUUID(),household_id:access.householdId,owner_user_id:access.userId,...values};
   await api.save(table,record,row?.version);await load();
  }
+ async function seedCategories(){
+  const rows=seededCategoryRows(data,access.householdId,access.userId);
+  if(!rows.length){setNotice('As categorias padrão já estão configuradas.');return;}
+  for(const row of rows)await api.save('categories',row);
+  await load();setNotice(`${rows.length} categorias padrão foram adicionadas.`);
+ }
  async function post(payload:any,operationId?:string){const p={...payload,household_id:access.householdId};const id=await enqueue(access.userId,access.householdId,p,operationId);await load();const item=await localDB.outbox.get(id);if(item?.error)throw Error('Lançamento mantido na fila: '+item.error);setNotice(item?'Lançamento salvo neste aparelho. Será enviado quando houver conexão.':'Lançamento registrado.');}
  async function action(task:()=>Promise<void>){setError('');try{await task();}catch(e){setError(message(e));}}
  const rows=posted(data).filter(r=>(!month||r.occurred_on.startsWith(month))&&(scope==='all'||r.scope===scope)&&(!search||[r.description,r.category,r.merchant].join(' ').toLocaleLowerCase().includes(search.toLocaleLowerCase())));
@@ -74,6 +81,7 @@ export function FinanceApp({api,access,profile}:{api:FinanceAPI;access:Ready;pro
  {loading?<p role="status">Carregando seus dados…</p>:<>
  {['dashboard','transactions','reports'].includes(page)&&<div className="filters"><label>Mês<input type="month" value={month} onChange={e=>setMonth(e.target.value)}/></label><label>Visibilidade<select value={scope} onChange={e=>setScope(e.target.value)}><option value="all">Meus dados e os familiares</option><option value="personal">Só meus dados pessoais</option><option value="family">Só despesas familiares</option></select></label><label>Pesquisar<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Descrição, categoria ou loja"/></label></div>}
  {page==='dashboard'&&<>
+ <SetupGuide snapshot={data} onSeedCategories={seedCategories} onOpen={table=>{if(table==='transactions'){setTransaction({});return;}setPage(table);setSearch('');}}/>
  <div className="metrics"><Metric title="Receitas" value={money(totals.income)}/><Metric title="Despesas" value={money(totals.expense)}/><Metric title="Resultado do período" value={money(totals.income-totals.expense)}/><Metric title="Saldo das minhas contas" value={money(active(data,'accounts').reduce((n,a)=>n+balance(data,a),0))}/></div>
  <p className="small">Despesas por data da compra. Pagamentos de fatura e transferências não entram novamente nas despesas.</p>
  <section className="panel"><h2>Despesas da família por pagador</h2><p>Você: {money(rows.filter(r=>r.kind==='expense'&&r.scope==='family'&&own(r)).reduce((n,r)=>n+Number(r.amount_cents),0))}</p><p>Outro membro: {money(rows.filter(r=>r.kind==='expense'&&r.scope==='family'&&!own(r)).reduce((n,r)=>n+Number(r.amount_cents),0))}</p><p className="small">Comparativo informativo. Não gera dívidas entre vocês.</p></section>

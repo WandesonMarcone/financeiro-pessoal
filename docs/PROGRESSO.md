@@ -1,6 +1,6 @@
 # Progresso
 
-Atualizado em 28/10/2026. PRs #1 e #2 integrados à `main`; desenvolvimento atual no PR rascunho #3, branch `feat/fase-2-identidade-rls`.
+Atualizado em 28/10/2026. PRs #1 a #5 integrados à `main`; PR6 em revisão na branch `feat/onboarding-inicial`. O repositório foi renomeado para `WandesonMarcone/financeiro-pessoal`.
 
 ## Implementado nesta branch
 
@@ -11,6 +11,7 @@ Atualizado em 28/10/2026. PRs #1 e #2 integrados à `main`; desenvolvimento atua
 - Notas e documentos privados (JPEG, PNG, WebP e PDF até 10 MB), checksum, retomada de upload, OCR português local, leitura de QR Code, garantia e itens de compra. Nenhuma consulta automática à SEFAZ foi inventada.
 - IndexedDB por usuário para cópia offline e fila de lançamentos; UUID/idempotência, erro visível, repetição manual e bloqueio da saída enquanto existirem pendências.
 - Exportação JSON e backup AES-256-GCM com PBKDF2, documentos e verificador/descompactador local. A restauração completa no banco continua sendo procedimento administrativo a ensaiar.
+- Guia mobile-first de primeiros passos, criação opcional de categorias familiares padrão e atalhos para configurar conta, cartão e primeiro lançamento. Nenhum saldo ou valor financeiro é inventado.
 
 ## Banco e segurança aplicados
 
@@ -23,9 +24,9 @@ Atualizado em 28/10/2026. PRs #1 e #2 integrados à `main`; desenvolvimento atua
 
 ## Verificações locais
 
-- 17 testes Vitest: identidade/interface, recuperação de senha, módulo financeiro, centavos, parcelas, datas, saldos, faturas, normalização e fila offline.
+- 19 testes Vitest: identidade/interface, recuperação de senha, módulo financeiro, centavos, parcelas, datas, saldos, faturas, normalização, fila offline e configuração inicial.
 - Testes PostgreSQL temporários aplicam todas as migrações e validam anônimo, não convidado, dois membros, família externa, revogado, privacidade pessoal, despesa familiar, idempotência e bloqueio de escrita direta.
-- Build de produção e PWA concluídos; `npm audit --omit=dev` encontrou zero vulnerabilidades. A auditoria completa registra quatro avisos baixos numa ferramenta de build (`deepmerge` via Workbox) sem correção compatível disponível em 28/10/2026.
+- Build de produção e PWA concluídos; `npm audit --omit=dev` encontrou zero vulnerabilidades. O caminho do GitHub Pages foi atualizado para `/financeiro-pessoal/` após a renomeação do repositório. A auditoria completa registra quatro avisos baixos numa ferramenta de build (`deepmerge` via Workbox) sem correção compatível disponível em 28/10/2026.
 - Smoke test HTTP local respondeu a aplicação e os arquivos OCR. Nenhum dado financeiro real foi usado.
 
 ## Bloqueios para uso real/publicação
@@ -33,6 +34,6 @@ Atualizado em 28/10/2026. PRs #1 e #2 integrados à `main`; desenvolvimento atua
 1. Ativar a proteção contra senhas vazadas no painel Supabase; o Security Advisor sinaliza essa configuração como pendente.
 2. Testar login e autorização HTTP com as duas contas reais, incluindo revogação, upload/download cruzado e aparelhos Android/iPhone.
 3. Ensaiar restauração do backup em ambiente isolado. O verificador local prova senha/integridade, mas não reinsere registros no banco.
-4. Conectar Cloudflare Pages ao repositório privado e configurar as duas variáveis públicas após revisão/integração do PR. O site ainda não foi publicado.
+4. Atualizar no Supabase Auth a URL de redirecionamento para `https://wandesonmarcone.github.io/financeiro-pessoal/` e confirmar o novo endereço do GitHub Pages após a integração do PR6.
 
 Esses itens impedem chamar o sistema de produção concluída, mas o código financeiro não é fictício: os módulos e regras já executam contra o schema aplicado.
