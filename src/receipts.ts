@@ -9,7 +9,8 @@ export async function recognize(file:File,progress:(text:string)=>void){
   if(!text.trim())throw Error('Este PDF contém apenas imagens. Envie a foto da nota para usar OCR.');}finally{doc.cleanup();}
  }else{
   const {createWorker}=await import('tesseract.js');
-  const worker=await createWorker('por',1,{workerPath:'/tesseract/worker.min.js',corePath:'/tesseract/tesseract-core-lstm.wasm.js',langPath:'/tesseract',logger:m=>progress(m.status==='recognizing text'?'Lendo nota: '+Math.round(m.progress*100)+'%':'Preparando leitura…')});
+  const base=import.meta.env.BASE_URL;
+  const worker=await createWorker('por',1,{workerPath:`${base}tesseract/worker.min.js`,corePath:`${base}tesseract/tesseract-core-lstm.wasm.js`,langPath:`${base}tesseract`,logger:m=>progress(m.status==='recognizing text'?'Lendo nota: '+Math.round(m.progress*100)+'%':'Preparando leitura…')});
   try{const result=await worker.recognize(file);text=result.data.text;}finally{await worker.terminate();}
  }
  const total=[...text.matchAll(/(?:valor\s+(?:total|a\s+pagar)|total\s+r?\$?)\s*[:\s]*([\d.,]+)/gi)].at(-1)?.[1]??'';
@@ -22,4 +23,3 @@ export async function readQR(file:File){
 }
 export async function checksum(file:File){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',await file.arrayBuffer()))].map(b=>b.toString(16).padStart(2,'0')).join('');}
 export {productKey};
-
