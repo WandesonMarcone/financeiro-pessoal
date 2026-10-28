@@ -1,6 +1,6 @@
 # Fase 2 — provisionamento de identidade
 
-A migração em `supabase/migrations/20261028105717_identity_family_rls.sql` cria somente famílias, perfis e vínculos. Aplicada em 28/10/2026 ao projeto Free `ucxgyfxyiahtqdsmkkhi` (migração versão `20261028105717`). Tabelas vazias; nenhum usuário real foi cadastrado. Nenhum dado financeiro deve ser criado antes de políticas próprias nas respectivas tabelas.
+A migração em `supabase/migrations/20261028105717_identity_family_rls.sql` cria somente famílias, perfis e vínculos. Aplicada em 28/10/2026 ao projeto Free `ucxgyfxyiahtqdsmkkhi` (migração versão `20261028105717`). Dois usuários Auth foram criados, vinculados à família `Nossa Casa` e receberam perfis neutros iniciais. Nenhum dado financeiro real foi criado.
 
 ## Fluxo recomendado
 1. Projeto Free criado. Antes de convidar duas pessoas, desabilitar cadastro público em Auth e verificar recuperação de acesso e estratégia de backup. Não publicar URL de convite.
@@ -11,7 +11,7 @@ A migração em `supabase/migrations/20261028105717_identity_family_rls.sql` cri
 6. Preparar exportação do banco e objetos e ensaiar restauração antes de dados reais.
 
 ## Limites atuais
-Há projeto Supabase Free, interface de login, schema financeiro/Storage e testes SQL de leitura/escrita para dois membros, pessoa não convidada, família externa e revogado. Falta validar HTTP autenticado, convite, recuperação e restauração completa. Os testes não persistem usuários fictícios. A função de associação permanece em schema privado; a RPC monetária pública é `SECURITY DEFINER`, mas só executa para `authenticated`, revalida toda autorização e foi documentada como aviso conhecido do Advisor. Não há acesso cruzado a perfis: o nome do outro membro não é consultável.
+Há projeto Supabase Free, interface de login, schema financeiro/Storage e testes SQL de leitura/escrita para dois membros, pessoa não convidada, família externa e revogado. Os dois usuários reais já foram criados, a família `Nossa Casa` foi provisionada e o cadastro público foi desativado. Falta validar HTTP autenticado, recuperação via e-mail e restauração completa. Os testes não persistem usuários fictícios. A função de associação permanece em schema privado; a RPC monetária pública é `SECURITY DEFINER`, mas só executa para `authenticated`, revalida toda autorização e foi documentada como aviso conhecido do Advisor. Não há acesso cruzado a perfis: o nome do outro membro não é consultável.
 
 ## Matriz mínima a automatizar
 | Identidade | Família | Próprio perfil | Vínculo próprio | Escrita de vínculo |
@@ -24,4 +24,4 @@ Há projeto Supabase Free, interface de login, schema financeiro/Storage e teste
 
 
 ## Atualização da base executável
-A interface React implementa login, recuperação/definição de nova senha, verificação de vínculo, perfil próprio, saída com limpeza local e os módulos descritos em `PROGRESSO.md`. `identity_rls.sql` e `finance_rls.sql` passam em PostgreSQL temporário depois das migrações. Dezessete testes e o build PWA passam. Fluxos HTTP autenticados, convite e entrega do e-mail de recuperação ainda não foram validados. Auth ainda apresenta `disable_signup=false`: desativar cadastro público no painel antes de publicar.
+A interface React implementa login, recuperação/definição de nova senha, verificação de vínculo, perfil próprio, saída com limpeza local e os módulos descritos em `PROGRESSO.md`. `identity_rls.sql` e `finance_rls.sql` passam em PostgreSQL temporário depois das migrações. Dezessete testes e o build PWA passam. Fluxos HTTP autenticados, convite e entrega do e-mail de recuperação ainda não foram validados. O cadastro público está desativado (`disable_signup=true`). O Security Advisor ainda sinaliza a proteção contra senhas vazadas como pendente; ativá-la no painel antes de publicar.

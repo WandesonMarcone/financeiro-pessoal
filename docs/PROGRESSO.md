@@ -14,7 +14,7 @@ Atualizado em 28/10/2026. PRs #1 e #2 integrados à `main`; desenvolvimento atua
 
 ## Banco e segurança aplicados
 
-- Supabase Free `ucxgyfxyiahtqdsmkkhi`, ainda sem usuários, famílias ou dados reais.
+- Supabase Free `ucxgyfxyiahtqdsmkkhi`, com dois usuários Auth e uma família `Nossa Casa` provisionados; sem contas, lançamentos ou documentos financeiros reais.
 - Migrações `20261028105717_identity_family_rls`, `20261028161917_finance_modules` e `20261028162109_finance_indexes` aplicadas.
 - 21 tabelas públicas com RLS, concessões explícitas, bucket `family-documents` privado e escrita monetária apenas pela RPC atômica/idempotente `post_transaction`.
 - Contas e cartões são privados até quando pagam despesa familiar; o outro membro vê a despesa e o pagador, não a origem, saldo ou fatura privada.
@@ -30,10 +30,9 @@ Atualizado em 28/10/2026. PRs #1 e #2 integrados à `main`; desenvolvimento atua
 
 ## Bloqueios para uso real/publicação
 
-1. Desabilitar signup público no painel Supabase (`disable_signup=false` foi observado). O plugin conectado não expõe essa alteração de Auth.
-2. Criar exatamente os dois usuários, formar uma família e vincular os IDs; exige os dois endereços de e-mail. O fluxo de solicitar/definir nova senha está no código, mas a entrega de e-mail e os redirects precisam ser configurados e testados.
-3. Testar login e autorização HTTP com as duas contas reais, incluindo revogação, upload/download cruzado e aparelhos Android/iPhone.
-4. Ensaiar restauração do backup em ambiente isolado. O verificador local prova senha/integridade, mas não reinsere registros no banco.
-5. Conectar Cloudflare Pages ao repositório privado e configurar as duas variáveis públicas após revisão/integração do PR. O site ainda não foi publicado.
+1. Ativar a proteção contra senhas vazadas no painel Supabase; o Security Advisor sinaliza essa configuração como pendente.
+2. Testar login e autorização HTTP com as duas contas reais, incluindo revogação, upload/download cruzado e aparelhos Android/iPhone.
+3. Ensaiar restauração do backup em ambiente isolado. O verificador local prova senha/integridade, mas não reinsere registros no banco.
+4. Conectar Cloudflare Pages ao repositório privado e configurar as duas variáveis públicas após revisão/integração do PR. O site ainda não foi publicado.
 
 Esses itens impedem chamar o sistema de produção concluída, mas o código financeiro não é fictício: os módulos e regras já executam contra o schema aplicado.
