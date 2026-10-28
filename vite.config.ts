@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import {VitePWA} from 'vite-plugin-pwa';
 
 export default defineConfig(({mode})=>{
- const base=mode==='github-pages'?'/nossa-casa-financas/':'/';
+ const base=mode==='github-pages'?'/financeiro-pessoal/':'/';
  return {base,plugins:[react(),VitePWA({
   registerType:'autoUpdate',
   includeAssets:['icon.svg','icon-192.png','icon-512.png'],
@@ -24,3 +24,4 @@ export default defineConfig(({mode})=>{
  test:{environment:'jsdom',setupFiles:['./tests/setup.ts'],include:['tests/**/*.test.ts','tests/**/*.test.tsx']}
  };
 });
+
