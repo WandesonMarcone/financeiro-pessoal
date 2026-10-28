@@ -1,6 +1,6 @@
 # Nossa Casa — especificação do projeto
 
-Estado: especificação inicial (28/10/2026). Requisitos abaixo são metas, não funcionalidades implementadas.
+Estado: especificação consolidada em 28/10/2026. A implementação atual está registrada em `PROGRESSO.md`; requisitos abaixo continuam sendo a referência de aceite.
 
 ## Objetivo e princípios
 PWA privado e responsivo para duas pessoas de uma família, com sincronização entre celular e computador e operação essencial offline. Cada pessoa tem login próprio; interface simples para quem só quer lançar um gasto e interface completa para administração. Complexidade visual não altera privilégios. Nenhuma informação financeira, documento, metadado, relatório ou resposta de API pode ser consultada por visitantes, contas não autenticadas, usuários não convidados, membros removidos ou pessoas fora da família. Apenas os dois usuários autorizados têm acesso, cada um segundo o escopo pessoal ou familiar. Dinheiro pessoal é privado por padrão; despesas familiares são compartilhadas. A administração técnica não implica permissão de leitura de dados pessoais do outro membro. Sem mensalidade ou API paga obrigatória. Dados e documentos devem ser exportáveis.
@@ -31,10 +31,11 @@ Fluxo rápido: registrar valor, descrição e escopo familiar em poucos passos; 
 ## Critérios transversais
 Teste com duas identidades, dados pessoais cruzados e família alheia; logs sem valores sensíveis; nenhum segredo no Git. Offline essencial: criar, consultar cache autorizado e editar rascunhos/despesas básicas; documento grande e OCR podem exigir conexão. Sincronização mostra pendências e erros sem perder o lançamento local. Exportação inclui dados estruturados e anexos com manifestos de integridade.
 
-## Definições pendentes
-- Escolher método de login e recuperação de conta sem depender do SMTP gratuito limitado; cadastro fechado para dois convites, sem inscrição pública.
-- Definir quem pode alterar/excluir lançamentos familiares e quem vê totais agregados privados; recomendação: autor edita, ambos veem os familiares, nenhum vê agregado privado do outro.
-- Definir conta/cartão pessoal usado em despesa familiar: recomendação mostrar pagador, tipo e identificação pública opcional, nunca detalhes/saldo da origem.
-- Definir regra de conflito em edição simultânea, retenção de documentos, limite de upload e política de exclusão/exportação.
-- Escolher formato de competência para parcelas, orçamento e recorrências; confirmar necessidade de múltiplas moedas e de acertos/reembolsos.
-- Confirmar plataforma de hospedagem e operação de backup antes de configurar contas de serviço.
+## Decisões e pendências
+- Decidido: login por e-mail/senha, cadastro fechado e tela de recuperação sem enumeração de conta; falta configurar/testar entrega de e-mail e desabilitar signup no painel.
+- Decidido: autor estorna lançamentos próprios; ambos leem despesas familiares; nenhum vê conta, cartão, fatura ou agregado pessoal do outro. A lista familiar de compras é colaborativa.
+- Decidido: conflitos usam versão esperada e ficam visíveis; exclusões financeiras viram estorno e cadastros usam arquivamento. Upload limitado a 10 MB por arquivo.
+- Decidido: despesa reconhecida na data da compra; parcelas representam compromissos futuros; pagamento de fatura não cria nova despesa; recorrência gera conta a vencer e só afeta saldo quando paga.
+- Decidido: Cloudflare Pages hospeda o frontend e Supabase Free fornece Auth/Postgres/Storage. Falta conectar Cloudflare e ensaiar restauração completa.
+- Pendente: retenção definitiva de documentos, múltiplas moedas, acertos/reembolsos opcionais e operação de SMTP/recuperação de conta.
+

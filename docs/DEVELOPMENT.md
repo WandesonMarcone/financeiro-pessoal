@@ -1,35 +1,12 @@
 # Desenvolvimento
 
-## Situação inicial
+Base executável em React, TypeScript e Vite. Node 24, npm.
 
-Inspeção em 28/10/2026: a branch main continha somente README.md com o título do projeto. Não foram encontrados código, dependências, testes, automações ou instruções AGENTS.md. O README original foi preservado integralmente.
+1. npm ci
+2. Copiar .env.example para .env.local e preencher URL e chave publishable do Supabase.
+3. npm run dev
+4. `npm test`, `npm run test:db`, `npm audit --omit=dev` e `npm run build`
 
-## Estrutura
+Guia completo: [Publicação](PUBLICACAO_CLOUDFLARE.md). Estado atual: [Progresso](PROGRESSO.md). O README original foi preservado.
 
-| Caminho | Finalidade |
-| --- | --- |
-| src/ | Código-fonte da aplicação |
-| tests/ | Testes automatizados |
-| scripts/ | Rotinas de desenvolvimento e manutenção |
-| docs/ | Documentação e decisões técnicas |
-| .editorconfig | Padrões de edição |
-| .gitignore | Exclusão de credenciais e artefatos locais do versionamento |
-
-## Preparação local
-
-1. Autenticar no GitHub com uma conta autorizada ao repositório privado.
-2. Clonar: `git clone https://github.com/WandesonMarcone/nossa-casa-financas.git`.
-3. Entrar: `cd nossa-casa-financas`.
-4. Buscar branches: `git fetch origin`.
-5. Acessar esta preparação: `git switch chore/estrutura-desenvolvimento`.
-6. Conferir o estado: `git status`.
-
-Não há comando de instalação, execução ou teste nesta etapa: nenhuma tecnologia ou dependência foi escolhida. As pastas contêm documentação, não uma aplicação funcional.
-
-## Próxima etapa
-
-Definir escopo inicial, plataforma, linguagem/framework, persistência e autenticação. Registrar essas decisões aqui antes de criar o manifesto de dependências e o ambiente executável. Depois, documentar versões, variáveis de ambiente, comandos de execução, testes e build; adicionar validação automatizada de acordo com a tecnologia adotada.
-
-## Fluxo de trabalho
-
-Criar branches por tarefa e revisar alterações por pull request. Preservar arquivos existentes; evitar reescrita de histórico. Usar dados fictícios em desenvolvimento e testes. Manter credenciais em arquivos locais ignorados; quando houver variáveis definidas, adicionar .env.example apenas com nomes e valores fictícios.
+Estrutura: `src` para aplicação, `tests` para interface e SQL, `supabase/migrations` para schema, `public` para PWA/cabeçalhos e `docs` para decisões. O `postinstall` copia para `public/tesseract` os arquivos OCR fixados no lockfile; essa pasta gerada não é versionada. Nunca versionar `.env.local`, dados pessoais, `service_role` ou senhas. Não executar fixtures SQL em banco com dados reais.

@@ -1,3 +1,3 @@
 # Código-fonte
 
-Reservado para a implementação da aplicação. A linguagem, o framework e a divisão de módulos ainda serão definidos e documentados em `docs/DEVELOPMENT.md`.
+React/TypeScript: App.tsx contém login e perfil, access.ts integra o Supabase. styles em style.css. Consulte ../docs/DEVELOPMENT.md para executar.

@@ -2,6 +2,8 @@
 
 Estado em 28/10/2026. Cada fase deve terminar com PR revisável, critérios de aceite e testes apropriados. A numeração funcional original foi mantida; infraestrutura offline e segurança começam cedo.
 
+O PR #3 implementa verticalmente uma primeira versão testável das fases 2 a 10 para evitar telas fictícias: schema, módulos, offline, documentos, relatórios e PWA trabalham juntos. Isso não marca todas as fases como concluídas. Provisionamento dos dois usuários, HTTP ponta a ponta, restauração completa, teste em aparelhos e publicação continuam como critérios bloqueadores.
+
 | Fase | Entrega e dependência | Conclusão verificável |
 | --- | --- | --- |
 | 1 | Especificação, arquitetura, custos, modelo e estrutura | Documentos revisados; dependências e lacunas explícitas |
@@ -23,3 +25,4 @@ Não aguardar fase 9 para IDs de operação, versionamento e escrita idempotente
 3. Privacidade frente ao operador da infraestrutura: RLS protege membros, não operador privilegiado. Se exigir sigilo até do operador, revisar arquitetura antes de dados reais.
 4. Política de backup externo: destino, periodicidade, chave de criptografia e pessoa responsável. Confirmar depois de uma restauração de teste.
 5. Limites de anexos: medir estimativa de notas por mês e testar 1 GB de Storage antes de adotar OCR/armazenamento permanente.
+
