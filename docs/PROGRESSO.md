@@ -2,15 +2,14 @@
 
 Atualizado em 28/10/2026.
 
-## Estado
-- main: README.md original, sem implementação.
-- PR #1: estrutura inicial em rascunho, aberto e mesclável; branch chore/estrutura-desenvolvimento.
-- Esta documentação da fase 1: proposta em branch própria derivada da estrutura do PR #1; não mesclada.
-- Decisão adicional: informações financeiras acessíveis somente aos usuários autorizados; acesso anônimo, não convidado e revogado negado. A distinção entre administração no app e privilégios da infraestrutura permanece documentada.
-- Fase 2 em branch: migração SQL de households, profiles, memberships e RLS proposta; ainda não aplicada nem testada em PostgreSQL.
-- Implementado em produção: nenhuma funcionalidade de aplicação.
-- Testes de aplicação: indisponíveis, pois ainda não há código, dependências nem ambiente.
-- Verificações da fase 1: árvore e branch de base inspecionadas; arquivos novos apenas; revisar árvore e diff do PR de documentação.
+## Concluído
+- PR #1 e PR #2 integrados à main: estrutura e documentação da Fase 1.
+- Supabase Free: projeto `ucxgyfxyiahtqdsmkkhi` ativo; migração `20261028105717_identity_family_rls` aplicada; `households`, `profiles`, `memberships` com RLS ativo.
+- Verificação: security advisor sem alertas; teste SQL transacional com dados fictícios passou para negação a anônimo e não convidado, escopo de membro A e revogação. A primeira tentativa do teste errou ao consultar tabela sem privilégio como anônimo; foi corrigida. Após rollback, 0 usuários fictícios e 0 famílias.
 
-## Próximos passos
-Revisar decisões pendentes em ESPECIFICACAO_PROJETO.md e PLANO_DESENVOLVIMENTO.md; integrar PR #1 antes do PR dependente; validar migração e políticas RLS com identidades fictícias em PostgreSQL/Supabase local; criar projeto executável, Auth e prova offline na fase 2. Configurar serviço apenas após checar cadastro, quotas e backup.
+## Em andamento
+- PR #3: arquivo de migração e guia da Fase 2. Migração remota aplicada, mas PR ainda em rascunho até testes de escrita, membro B, outra família e API HTTP.
+- Nenhum usuário real, perfil familiar, documento ou dado financeiro foi cadastrado. Frontend/login, Storage e backup/restauração pendentes.
+
+## Próximas etapas
+Conferir Auth (bloquear cadastro público e fluxo de convite); testar permissões de escrita e acesso cruzado com dados fictícios; criar interface de login e validar via API; preparar exportação e restauração antes de dados reais. Não declarar Fase 2 concluída antes dessas verificações.
