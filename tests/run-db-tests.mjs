@@ -29,7 +29,8 @@ try{
  for(const migration of [
   'supabase/migrations/20261028105717_identity_family_rls.sql',
   'supabase/migrations/20261028161917_finance_modules.sql',
-  'supabase/migrations/20261028162109_finance_indexes.sql'
+  'supabase/migrations/20261028162109_finance_indexes.sql',
+  'supabase/migrations/20261028200000_shared_household_visibility.sql'
  ]) await db.exec(await readFile(migration,'utf8'));
  for(const test of ['tests/identity_rls.sql','tests/finance_rls.sql']){
   await db.exec(await readFile(test,'utf8'));

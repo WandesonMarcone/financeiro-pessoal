@@ -19,7 +19,7 @@ Fontes oficiais: [Supabase pricing](https://supabase.com/pricing), [billing](htt
 
 ## Modelo de dados implementado
 - `auth.users` (provedor), `profiles`, `households` e `memberships` formam a identidade; associação é provisionada administrativamente, sem cadastro pelo cliente.
-- `accounts` e `cards` pertencem sempre a uma pessoa. `transactions` contém o fato financeiro e o escopo; origem bancária fica em `ledger_entries` e cartão/parcelas em `card_installments`, cujas RLS dependem da conta/cartão privado.
+- `accounts` e `cards` têm autoria preservada, mas são legíveis por todos os membros ativos da família. `transactions` contém o fato financeiro; origem bancária fica em `ledger_entries` e cartão/parcelas em `card_installments`, também legíveis na mesma família. Escrita continua restrita ao autor e às validações da RPC.
 - `post_transaction(operation_id,payload)` registra receita, despesa, transferência, compra no cartão, pagamento ou estorno em uma única transação SQL. `finance_operations(user_id,id,payload,result_id)` garante repetição idempotente e rejeita o mesmo ID com conteúdo diferente.
 - Transferência cria dois movimentos cuja soma é zero. Compra no cartão cria a despesa uma vez e parcelas exatas; `invoice_payments` reduz conta/fatura sem criar outra despesa.
 - Cadastros versionados: `categories`, `budgets`, `goals`, `goal_contributions`, `assets`, `shopping_items`, `recurring_rules`, `due_items`, `documents` e `receipt_items`. Triggers impedem troca de dono/família e validam relações pai-filho.
@@ -28,9 +28,9 @@ Fontes oficiais: [Supabase pricing](https://supabase.com/pricing), [billing](htt
 ## Matriz de autorização implementada
 | Recurso | Dono | Outro membro | Administrador técnico |
 | --- | --- | --- | --- |
-| Conta, cartão, receita e despesa pessoal | Ler/escrever | Sem acesso | Sem privilégio pelo papel no app |
-| Despesa familiar, lista e documento familiar | Ler; editar conforme autoria/regra | Ler; editar conforme autoria/regra | Sem privilégio pelo papel técnico |
-| Documento pessoal | Ler/escrever | Sem acesso | Sem privilégio pelo papel no app |
+| Conta, cartão, receitas, despesas, faturas e movimentos | Ler/escrever os próprios | Ler | Sem privilégio pelo papel no app |
+| Lista, documento, orçamento, meta, patrimônio e relatórios | Ler; editar conforme autoria/regra | Ler | Sem privilégio pelo papel técnico |
+| Auditoria | Ler os eventos da família; escrita pelo sistema | Ler | Sem privilégio pelo papel no app |
 | Perfil e associação familiar | Próprio perfil; gestão de convite conforme papel | Próprio perfil | Gestão limitada de configuração |
 
 Negar todas as consultas e mutações para auth.uid() nulo, conta não convidada, membro inativo/removido e usuário de outra família; não publicar dados financeiros em páginas estáticas, pré-visualizações, logs ou caches compartilhados. Os arquivos públicos do frontend podem ser servidos pelo Pages, mas carregam somente código e recursos sem dados da família. RLS com auth.uid(), membership ativo e predicados de escopo para SELECT/INSERT/UPDATE/DELETE; WITH CHECK em toda escrita; negar por padrão, inclusive tabelas auxiliares, Storage e views/RPCs. Não confiar em owner_user_id ou household_id vindos do browser sem validar associação e origem. Service role ignora RLS: restringir a tarefas administrativas isoladas com segredo fora do cliente e trilha de acesso. O operador da conta Supabase ou do banco pode ter acesso técnico ao banco; o requisito de confidencialidade frente ao próprio administrador da infraestrutura requer criptografia ponta a ponta e gestão de chaves separada, que não está resolvida.

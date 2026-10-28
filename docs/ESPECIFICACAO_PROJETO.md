@@ -3,11 +3,11 @@
 Estado: especificação consolidada em 28/10/2026. A implementação atual está registrada em `PROGRESSO.md`; requisitos abaixo continuam sendo a referência de aceite.
 
 ## Objetivo e princípios
-PWA privado e responsivo para duas pessoas de uma família, com sincronização entre celular e computador e operação essencial offline. Cada pessoa tem login próprio; interface simples para quem só quer lançar um gasto e interface completa para administração. Complexidade visual não altera privilégios. Nenhuma informação financeira, documento, metadado, relatório ou resposta de API pode ser consultada por visitantes, contas não autenticadas, usuários não convidados, membros removidos ou pessoas fora da família. Apenas os dois usuários autorizados têm acesso, cada um segundo o escopo pessoal ou familiar. Dinheiro pessoal é privado por padrão; despesas familiares são compartilhadas. A administração técnica não implica permissão de leitura de dados pessoais do outro membro. Sem mensalidade ou API paga obrigatória. Dados e documentos devem ser exportáveis.
+PWA privado e responsivo para duas pessoas de uma família, com sincronização entre celular e computador e operação essencial offline. Cada pessoa tem login próprio; interface simples para quem só quer lançar um gasto e interface completa para administração. Complexidade visual não altera privilégios. Nenhuma informação financeira, documento, metadado, relatório ou resposta de API pode ser consultada por visitantes, contas não autenticadas, usuários não convidados, membros removidos ou pessoas fora da família. Os dois membros ativos da mesma família podem consultar todos os dados financeiros um do outro. Sem mensalidade ou API paga obrigatória. Dados e documentos devem ser exportáveis.
 
 ## Regras financeiras
 - Valor monetário em centavos inteiros ou NUMERIC(18,2) no banco, nunca float para somas; moeda BRL inicialmente; datas locais em America/Sao_Paulo, instantes persistidos em UTC.
-- Uma despesa tem descrição, valor, data, categoria, estabelecimento opcional, pagador, origem (conta/cartão), escopo pessoal ou familiar e anexos opcionais. Escopo pessoal exige proprietário; escopo familiar exige participação na família.
+- Uma despesa tem descrição, valor, data, categoria, estabelecimento opcional, pagador, origem (conta/cartão) e anexos opcionais. Todo lançamento fica visível aos membros ativos da mesma família.
 - O pagador de despesa familiar pode variar; totais por pagador são informativos. Nunca gerar dívida ou cobrança sem ação explícita.
 - Transferência entre contas é um par vinculado de movimentos patrimoniais; não aumenta receitas/despesas. Estorno conserva trilha de auditoria.
 - Compra no cartão gera obrigação e competência de despesa uma vez; parcelas são compromissos futuros; pagamento da fatura liquida passivo e reduz conta, sem nova despesa. Definir a visão de caixa e competência separadamente.
@@ -33,7 +33,7 @@ Teste com duas identidades, dados pessoais cruzados e família alheia; logs sem 
 
 ## Decisões e pendências
 - Decidido: login por e-mail/senha, cadastro fechado e tela de recuperação sem enumeração de conta; falta configurar/testar entrega de e-mail e desabilitar signup no painel.
-- Decidido: autor estorna lançamentos próprios; ambos leem despesas familiares; nenhum vê conta, cartão, fatura ou agregado pessoal do outro. A lista familiar de compras é colaborativa.
+- Decidido: os dois membros ativos leem contas, cartões, lançamentos, faturas, documentos, relatórios e cadastros da família. A autoria permanece registrada; criar, editar, arquivar, estornar ou usar conta/cartão de outra pessoa continua bloqueado, salvo futura decisão explícita para colaboração de escrita.
 - Decidido: conflitos usam versão esperada e ficam visíveis; exclusões financeiras viram estorno e cadastros usam arquivamento. Upload limitado a 10 MB por arquivo.
 - Decidido: despesa reconhecida na data da compra; parcelas representam compromissos futuros; pagamento de fatura não cria nova despesa; recorrência gera conta a vencer e só afeta saldo quando paga.
 - Decidido: Cloudflare Pages hospeda o frontend e Supabase Free fornece Auth/Postgres/Storage. Falta conectar Cloudflare e ensaiar restauração completa.
