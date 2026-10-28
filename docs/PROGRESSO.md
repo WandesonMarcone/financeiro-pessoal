@@ -24,7 +24,7 @@ Atualizado em 28/10/2026. PRs #1 a #5 integrados à `main`; PR6 em revisão na b
 
 ## Verificações locais
 
-- 17 testes Vitest: identidade/interface, recuperação de senha, módulo financeiro, centavos, parcelas, datas, saldos, faturas, normalização e fila offline.
+- 19 testes Vitest: identidade/interface, recuperação de senha, módulo financeiro, centavos, parcelas, datas, saldos, faturas, normalização, fila offline e configuração inicial.
 - Testes PostgreSQL temporários aplicam todas as migrações e validam anônimo, não convidado, dois membros, família externa, revogado, privacidade pessoal, despesa familiar, idempotência e bloqueio de escrita direta.
 - Build de produção e PWA concluídos; `npm audit --omit=dev` encontrou zero vulnerabilidades. O caminho do GitHub Pages foi atualizado para `/financeiro-pessoal/` após a renomeação do repositório. A auditoria completa registra quatro avisos baixos numa ferramenta de build (`deepmerge` via Workbox) sem correção compatível disponível em 28/10/2026.
 - Smoke test HTTP local respondeu a aplicação e os arquivos OCR. Nenhum dado financeiro real foi usado.
