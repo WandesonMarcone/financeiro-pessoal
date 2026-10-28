@@ -1,15 +1,20 @@
 # Progresso
-
 Atualizado em 28/10/2026.
 
-## Concluído
-- PR #1 e PR #2 integrados à main: estrutura e documentação da Fase 1.
-- Supabase Free: projeto `ucxgyfxyiahtqdsmkkhi` ativo; migração `20261028105717_identity_family_rls` aplicada; `households`, `profiles`, `memberships` com RLS ativo.
-- Verificação: security advisor sem alertas; teste SQL transacional com dados fictícios passou para negação a anônimo e não convidado, escopo de membro A e revogação. A primeira tentativa do teste errou ao consultar tabela sem privilégio como anônimo; foi corrigida. Após rollback, 0 usuários fictícios e 0 famílias.
+## Entregas
+- PRs #1 e #2 integrados à main.
+- Migração Supabase 20261028105717 aplicada: famílias, perfis e vínculos com RLS.
+- PR #3 ampliado: aplicação React/TypeScript/Vite com login Supabase, verificação de vínculo ativo, perfil próprio, saída, estados de erro e layout responsivo.
+- Dependências com versões exatas e package-lock.json. Workflow GitHub Actions para testes e build, com actions fixadas por commit.
+- Guia de execução/publicação Cloudflare Pages. Frontend sem variáveis válidas mostra estado de preparação.
 
-## Em andamento
-- PR #3: arquivo de migração e guia da Fase 2. Migração remota aplicada, mas PR ainda em rascunho até testes de escrita, membro B, outra família e API HTTP.
-- Nenhum usuário real, perfil familiar, documento ou dado financeiro foi cadastrado. Frontend/login, Storage e backup/restauração pendentes.
+## Verificação
+- Teste SQL reproduzível tests/identity_rls.sql executado no PostgreSQL: anônimo sem permissão; não convidado sem leitura/escrita; membros A e B isolados; família externa isolada; edição própria permitida; escrita cruzada, troca de dono, exclusão e promoção de vínculo negadas; revogação bloqueia leitura/escrita.
+- Todas as fixtures revertidas: zero usuários e zero famílias confirmados.
+- Sete testes de interface passaram e build TypeScript/Vite passou.
+- Nenhum dado financeiro real foi usado.
 
-## Próximas etapas
-Conferir Auth (bloquear cadastro público e fluxo de convite); testar permissões de escrita e acesso cruzado com dados fictícios; criar interface de login e validar via API; preparar exportação e restauração antes de dados reais. Não declarar Fase 2 concluída antes dessas verificações.
+## Pendências para concluir Fase 2
+Configurar Auth sem signup público, criar os dois usuários de forma segura, implementar convite/definição e recuperação de senha, testar HTTP autenticado, validar acessibilidade e navegação em aparelhos, preparar backup e ensaiar restauração. Publicação Cloudflare ainda não realizada. PWA/offline e módulos financeiros ainda não implementados.
+
+API HTTP pública: consultas às três tabelas responderam 401/42501. Auth settings: disable_signup=false; desabilitar cadastro público antes da publicação. O plugin atual não oferece edição dessa configuração.

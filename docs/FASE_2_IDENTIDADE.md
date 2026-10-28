@@ -11,7 +11,7 @@ A migração em `supabase/migrations/20261028105717_identity_family_rls.sql` cri
 6. Preparar exportação do banco e objetos e ensaiar restauração antes de dados reais.
 
 ## Limites atuais
-Há projeto Supabase Free e teste SQL transacional de leitura de anônimo, não convidado, membro A e revogado. Falta frontend, login interativo, recuperação, testes de escrita, membro B, família externa e teste pela API HTTP. O teste foi revertido sem persistir usuários fictícios. A função `security definer` deve ser revisada no ambiente alvo: proprietário da função precisa ter acesso à tabela de vínculos; nenhum usuário comum deve poder alterá-la. Não há acesso cruzado autorizado a perfis: o display_name do outro membro não é consultável por esta versão.
+Há projeto Supabase Free, interface de login e testes SQL de leitura/escrita para os dois membros, pessoa não convidada, família externa e revogado. Falta validar HTTP autenticado, convite, recuperação e backup/restauração. Os testes foram revertidos sem persistir usuários fictícios. A função `security definer` permanece em schema privado e retorna somente a associação do usuário atual. Não há acesso cruzado autorizado a perfis: o display_name do outro membro não é consultável por esta versão.
 
 ## Matriz mínima a automatizar
 | Identidade | Família | Próprio perfil | Vínculo próprio | Escrita de vínculo |
@@ -21,3 +21,7 @@ Há projeto Supabase Free e teste SQL transacional de leitura de anônimo, não 
 | Membro ativo A/B | Lê sua família | Lê/edita próprio | Lê próprio | Nega |
 | Membro revogado | Nega | Nega | Nega | Nega |
 | Usuário de outra família | Nega | Lê próprio | Lê próprio | Nega |
+
+
+## Atualização da base executável
+A interface React agora implementa login por senha, verificação de vínculo, perfil próprio e saída. tests/identity_rls.sql executado com sucesso inclui os dois membros, família externa, escrita e revogação; todas as fixtures foram revertidas. Sete testes da interface e build passaram. Consultas HTTP sem login retornaram 401 nas três tabelas. Fluxos HTTP autenticados, convite e recuperação ainda não validados. Auth ainda apresenta disable_signup=false: desativar cadastro público no painel antes de publicar.
