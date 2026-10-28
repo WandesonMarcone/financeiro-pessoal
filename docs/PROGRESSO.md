@@ -12,6 +12,7 @@ Atualizado em 28/10/2026. PRs #1 a #5 integrados à `main`; PR6 em revisão na b
 - IndexedDB por usuário para cópia offline e fila de lançamentos; UUID/idempotência, erro visível, repetição manual e bloqueio da saída enquanto existirem pendências.
 - Exportação JSON e backup AES-256-GCM com PBKDF2, documentos e verificador/descompactador local. A restauração completa no banco continua sendo procedimento administrativo a ensaiar.
 - Guia mobile-first de primeiros passos, criação opcional de categorias familiares padrão e atalhos para configurar conta, cartão e primeiro lançamento. Nenhum saldo ou valor financeiro é inventado.
+- Próximo PR: sugestões locais de linhas de produtos a partir do texto OCR, com correção individual, seleção e confirmação antes de salvar no documento. Formatos de nota variam; linhas incertas ficam para cadastro manual. A consulta pública da SEF/MG exige reCAPTCHA e não é importação automática.
 
 ## Banco e segurança aplicados
 
