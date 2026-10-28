@@ -5,7 +5,7 @@ Estado em 28/10/2026. Cada fase deve terminar com PR revisável, critérios de a
 | Fase | Entrega e dependência | Conclusão verificável |
 | --- | --- | --- |
 | 1 | Especificação, arquitetura, custos, modelo e estrutura | Documentos revisados; dependências e lacunas explícitas |
-| 2 | Projeto local, migrações, Auth, dois membros, RLS e Storage privado básico | Testes de acesso cruzado e anonimizados; sem segredo no cliente; backup/restore de teste antes de dados reais |
+| 2 | Projeto local, migrações, Auth, dois membros, RLS e Storage privado básico | Testes de acesso cruzado e de negação para anônimo, não convidado e membro revogado; sem segredo no cliente; backup/restore de teste antes de dados reais |
 | 3 | Contas, receitas/despesas, categorias, movimentos, transferências | Saldos corretos, transferências neutras, testes de centavos e idempotência |
 | 4 | Despesas da casa, pagador, lista de compras e fluxo simples | Compartilhamento sem exposição de conta privada; dois usuários testados |
 | 5 | Cartões, parcelas, faturas, recorrências | Somatório de parcelas, virada de fatura e pagamento sem duplicidade testados |

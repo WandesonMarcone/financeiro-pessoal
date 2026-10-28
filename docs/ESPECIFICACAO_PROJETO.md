@@ -3,7 +3,7 @@
 Estado: especificação inicial (28/10/2026). Requisitos abaixo são metas, não funcionalidades implementadas.
 
 ## Objetivo e princípios
-PWA privado e responsivo para duas pessoas de uma família, com sincronização entre celular e computador e operação essencial offline. Cada pessoa tem login próprio; interface simples para quem só quer lançar um gasto e interface completa para administração. Complexidade visual não altera privilégios. Dinheiro pessoal é privado por padrão; despesas familiares são compartilhadas. A administração técnica não implica permissão de leitura de dados pessoais do outro membro. Sem mensalidade ou API paga obrigatória. Dados e documentos devem ser exportáveis.
+PWA privado e responsivo para duas pessoas de uma família, com sincronização entre celular e computador e operação essencial offline. Cada pessoa tem login próprio; interface simples para quem só quer lançar um gasto e interface completa para administração. Complexidade visual não altera privilégios. Nenhuma informação financeira, documento, metadado, relatório ou resposta de API pode ser consultada por visitantes, contas não autenticadas, usuários não convidados, membros removidos ou pessoas fora da família. Apenas os dois usuários autorizados têm acesso, cada um segundo o escopo pessoal ou familiar. Dinheiro pessoal é privado por padrão; despesas familiares são compartilhadas. A administração técnica não implica permissão de leitura de dados pessoais do outro membro. Sem mensalidade ou API paga obrigatória. Dados e documentos devem ser exportáveis.
 
 ## Regras financeiras
 - Valor monetário em centavos inteiros ou NUMERIC(18,2) no banco, nunca float para somas; moeda BRL inicialmente; datas locais em America/Sao_Paulo, instantes persistidos em UTC.
@@ -32,7 +32,7 @@ Fluxo rápido: registrar valor, descrição e escopo familiar em poucos passos; 
 Teste com duas identidades, dados pessoais cruzados e família alheia; logs sem valores sensíveis; nenhum segredo no Git. Offline essencial: criar, consultar cache autorizado e editar rascunhos/despesas básicas; documento grande e OCR podem exigir conexão. Sincronização mostra pendências e erros sem perder o lançamento local. Exportação inclui dados estruturados e anexos com manifestos de integridade.
 
 ## Definições pendentes
-- Escolher método de login e recuperação de conta sem depender do SMTP gratuito limitado; cadastro fechado para dois convites.
+- Escolher método de login e recuperação de conta sem depender do SMTP gratuito limitado; cadastro fechado para dois convites, sem inscrição pública.
 - Definir quem pode alterar/excluir lançamentos familiares e quem vê totais agregados privados; recomendação: autor edita, ambos veem os familiares, nenhum vê agregado privado do outro.
 - Definir conta/cartão pessoal usado em despesa familiar: recomendação mostrar pagador, tipo e identificação pública opcional, nunca detalhes/saldo da origem.
 - Definir regra de conflito em edição simultânea, retenção de documentos, limite de upload e política de exclusão/exportação.
