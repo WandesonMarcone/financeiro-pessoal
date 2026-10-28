@@ -7,9 +7,11 @@ export type Access = {kind:'signedout'} | {kind:'denied'} | Ready;
 export interface Gateway {
  finance?:FinanceAPI;
  readAccess():Promise<Access>;
- subscribe(callback:()=>void):()=>void;
+ subscribe(callback:(event?:string)=>void):()=>void;
  signIn(email:string,password:string):Promise<void>;
  signOut():Promise<void>;
+ requestPasswordReset(email:string):Promise<void>;
+ updatePassword(password:string):Promise<void>;
  saveProfile(userId:string,name:string):Promise<void>;
 }
 export function supabaseGateway(client:SupabaseClient<Database>):Gateway {
@@ -40,10 +42,12 @@ export function supabaseGateway(client:SupabaseClient<Database>):Gateway {
    return lastAccess;
   },
   subscribe(callback){
-   const {data}=client.auth.onAuthStateChange(()=>callback());
+   const {data}=client.auth.onAuthStateChange(event=>callback(event));
    return ()=>data.subscription.unsubscribe();
   },
   async signIn(email,password){const {error}=await client.auth.signInWithPassword({email,password});if(error) throw error;},
+  async requestPasswordReset(email){const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});if(error)throw error;},
+  async updatePassword(password){const {error}=await client.auth.updateUser({password});if(error)throw error;const out=await client.auth.signOut({scope:'local'});if(out.error)throw out.error;},
   async signOut(){
    const access=lastAccess;
    if(access&&(await pendingFor(access.userId)).length)throw Error('Sincronize, exporte ou descarte os lançamentos pendentes antes de sair.');
@@ -73,6 +77,6 @@ export function configuredGateway():Gateway|null {
  const url=import.meta.env.VITE_SUPABASE_URL, key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
  if(!url||!key||!key.startsWith('sb_publishable_')||key.includes('SUBSTITUA')) return null;
  try {if(new URL(url).protocol!=='https:') return null;}catch{return null;}
- return supabaseGateway(createClient<Database>(url,key,{auth:{storage:window.sessionStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}}));
+ return supabaseGateway(createClient<Database>(url,key,{auth:{storage:window.sessionStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}}));
 }
 

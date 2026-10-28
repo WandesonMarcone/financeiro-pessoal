@@ -23,7 +23,7 @@ Atualizado em 28/10/2026. PRs #1 e #2 integrados à `main`; desenvolvimento atua
 
 ## Verificações locais
 
-- 15 testes Vitest: identidade/interface, módulo financeiro, centavos, parcelas, datas, saldos, faturas, normalização e fila offline.
+- 17 testes Vitest: identidade/interface, recuperação de senha, módulo financeiro, centavos, parcelas, datas, saldos, faturas, normalização e fila offline.
 - Testes PostgreSQL temporários aplicam todas as migrações e validam anônimo, não convidado, dois membros, família externa, revogado, privacidade pessoal, despesa familiar, idempotência e bloqueio de escrita direta.
 - Build de produção e PWA concluídos; `npm audit --omit=dev` encontrou zero vulnerabilidades. A auditoria completa registra quatro avisos baixos numa ferramenta de build (`deepmerge` via Workbox) sem correção compatível disponível em 28/10/2026.
 - Smoke test HTTP local respondeu a aplicação e os arquivos OCR. Nenhum dado financeiro real foi usado.
@@ -31,7 +31,7 @@ Atualizado em 28/10/2026. PRs #1 e #2 integrados à `main`; desenvolvimento atua
 ## Bloqueios para uso real/publicação
 
 1. Desabilitar signup público no painel Supabase (`disable_signup=false` foi observado). O plugin conectado não expõe essa alteração de Auth.
-2. Criar exatamente os dois usuários, formar uma família e vincular os IDs; exige os dois endereços de e-mail e um fluxo seguro de definição/recuperação de senha.
+2. Criar exatamente os dois usuários, formar uma família e vincular os IDs; exige os dois endereços de e-mail. O fluxo de solicitar/definir nova senha está no código, mas a entrega de e-mail e os redirects precisam ser configurados e testados.
 3. Testar login e autorização HTTP com as duas contas reais, incluindo revogação, upload/download cruzado e aparelhos Android/iPhone.
 4. Ensaiar restauração do backup em ambiente isolado. O verificador local prova senha/integridade, mas não reinsere registros no banco.
 5. Conectar Cloudflare Pages ao repositório privado e configurar as duas variáveis públicas após revisão/integração do PR. O site ainda não foi publicado.

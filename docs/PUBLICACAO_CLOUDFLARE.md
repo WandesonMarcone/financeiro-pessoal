@@ -18,7 +18,7 @@ Conectar somente o repositório privado WandesonMarcone/nossa-casa-financas.
 O frontend usa CSS próprio e é uma PWA instalável. O shell e os recursos estáticos funcionam offline; snapshots e fila são separados por usuário no IndexedDB. OCR, fotos/PDF, QR e exportações já estão implementados. O modelo OCR é copiado no `postinstall` e armazenado pelo service worker somente quando usado.
 
 ## Acesso
-O cliente usa Supabase Auth (email/senha), valida o usuário no servidor e exige exatamente um vínculo ativo. Não há cadastro público na interface. **Isso não desabilita cadastro no provedor:** conferir o toggle de signup em Auth antes de publicar. Login por convite/redefinição de senha ainda precisa de implementação e configuração de redirects/SMTP.
+O cliente usa Supabase Auth (email/senha), valida o usuário no servidor e exige exatamente um vínculo ativo. Não há cadastro público na interface. **Isso não desabilita cadastro no provedor:** conferir o toggle de signup em Auth antes de publicar. Solicitação e definição de nova senha usam PKCE e resposta que não enumera contas; redirects/SMTP ainda precisam ser configurados e testados.
 Sessão mantida em `sessionStorage` por aba. Dados privados podem ficar no IndexedDB para consulta offline, sempre identificados pelo usuário/família; sair limpa esses dados. A saída é bloqueada se houver lançamento pendente para evitar perda. Foco/retorno da rede e verificações periódicas revalidam acesso; RLS protege cada requisição mesmo antes da atualização visual.
 O perfil salva apenas o nome do usuário atual. Não há painéis financeiros simulados.
 

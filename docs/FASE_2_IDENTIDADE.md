@@ -24,4 +24,4 @@ Há projeto Supabase Free, interface de login, schema financeiro/Storage e teste
 
 
 ## Atualização da base executável
-A interface React implementa login por senha, verificação de vínculo, perfil próprio, saída com limpeza local e todos os módulos financeiros descritos em `PROGRESSO.md`. `identity_rls.sql` e `finance_rls.sql` passam em PostgreSQL temporário depois de aplicar as migrações. Quinze testes de interface/domínio/fila e o build PWA passam. Fluxos HTTP autenticados, convite e recuperação ainda não foram validados. Auth ainda apresenta `disable_signup=false`: desativar cadastro público no painel antes de publicar.
+A interface React implementa login, recuperação/definição de nova senha, verificação de vínculo, perfil próprio, saída com limpeza local e os módulos descritos em `PROGRESSO.md`. `identity_rls.sql` e `finance_rls.sql` passam em PostgreSQL temporário depois das migrações. Dezessete testes e o build PWA passam. Fluxos HTTP autenticados, convite e entrega do e-mail de recuperação ainda não foram validados. Auth ainda apresenta `disable_signup=false`: desativar cadastro público no painel antes de publicar.

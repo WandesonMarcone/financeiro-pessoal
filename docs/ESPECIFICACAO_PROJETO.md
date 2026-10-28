@@ -32,10 +32,10 @@ Fluxo rápido: registrar valor, descrição e escopo familiar em poucos passos; 
 Teste com duas identidades, dados pessoais cruzados e família alheia; logs sem valores sensíveis; nenhum segredo no Git. Offline essencial: criar, consultar cache autorizado e editar rascunhos/despesas básicas; documento grande e OCR podem exigir conexão. Sincronização mostra pendências e erros sem perder o lançamento local. Exportação inclui dados estruturados e anexos com manifestos de integridade.
 
 ## Decisões e pendências
-- Decidido: login por e-mail/senha, cadastro fechado; falta configurar recuperação sem depender do SMTP Free e desabilitar signup no painel.
+- Decidido: login por e-mail/senha, cadastro fechado e tela de recuperação sem enumeração de conta; falta configurar/testar entrega de e-mail e desabilitar signup no painel.
 - Decidido: autor estorna lançamentos próprios; ambos leem despesas familiares; nenhum vê conta, cartão, fatura ou agregado pessoal do outro. A lista familiar de compras é colaborativa.
 - Decidido: conflitos usam versão esperada e ficam visíveis; exclusões financeiras viram estorno e cadastros usam arquivamento. Upload limitado a 10 MB por arquivo.
 - Decidido: despesa reconhecida na data da compra; parcelas representam compromissos futuros; pagamento de fatura não cria nova despesa; recorrência gera conta a vencer e só afeta saldo quando paga.
 - Decidido: Cloudflare Pages hospeda o frontend e Supabase Free fornece Auth/Postgres/Storage. Falta conectar Cloudflare e ensaiar restauração completa.
-- Pendente: retenção definitiva de documentos, múltiplas moedas, acertos/reembolsos opcionais e política de recuperação de conta.
+- Pendente: retenção definitiva de documentos, múltiplas moedas, acertos/reembolsos opcionais e operação de SMTP/recuperação de conta.
 
