@@ -7,6 +7,7 @@ import {ResourceEditor,type Field} from './ResourceEditor';
 import {TransactionForm} from './TransactionForm';
 import {downloadBlob,exportData,exportReport,parseCSV} from './exports';
 import {checksum,readQR,recognize} from './receipts';
+import {enableNotifications,notificationsAvailable,notifyDueItems} from './notifications';
 const labels:Record<string,string>={dashboard:'Visão geral',transactions:'Lançamentos',accounts:'Contas',cards:'Cartões',due_items:'Contas a vencer',shopping_items:'Lista de compras',documents:'Notas e documentos',budgets:'Orçamentos',goals:'Metas e reservas',assets:'Patrimônio',receipt_items:'Produtos e preços',reports:'Relatórios',recurring_rules:'Recorrências',categories:'Categorias',sync:'Sincronização',profile:'Meu perfil',audit_events:'Histórico'};
 const baseFields:Record<string,Field[]>={
  accounts:[{key:'name',label:'Nome da conta'},{key:'opening_cents',label:'Saldo inicial (R$)',type:'money',default:'0'}],
@@ -68,7 +69,7 @@ export function FinanceApp({api,access,profile}:{api:FinanceAPI;access:Ready;pro
  <nav aria-label="Módulos">{nav.map(key=><button key={key} className={page===key?'selected':'quiet'} onClick={()=>{setPage(key);setSearch('');}}>{labels[key]}</button>)}</nav>
  {error&&<p role="alert" className="banner error">{error}</p>}{notice&&<p role="status" className="banner">{notice}<button className="quiet" onClick={()=>setNotice('')}>Fechar</button></p>}
  {offline&&<p className="banner">Você está vendo uma cópia local. Novos lançamentos ficam pendentes até a confirmação do servidor.</p>}
- {transaction&&<TransactionForm key={JSON.stringify(transaction)} snapshot={data} initial={transaction} onSave={post} onClose={()=>setTransaction(null)}/>}
+ {transaction&&<TransactionForm key={JSON.stringify(transaction)} snapshot={data} initial={transaction} simple={simple&&!transaction.due_item_id} onSave={post} onClose={()=>setTransaction(null)}/>}
  {editor&&<ResourceEditor title={(editor.row?'Editar ':'Novo registro · ')+(labels[editor.table]??editor.table)} fields={editor.fields??baseFields[editor.table]} initial={editor.row} allowScope={!privateTables.includes(editor.table)&&!editor.extra} onSave={values=>save(editor.table,{...values,...editor.extra},editor.row)} onClose={()=>setEditor(null)}/>}
  {loading?<p role="status">Carregando seus dados…</p>:<>
  {['dashboard','transactions','reports'].includes(page)&&<div className="filters"><label>Mês<input type="month" value={month} onChange={e=>setMonth(e.target.value)}/></label><label>Visibilidade<select value={scope} onChange={e=>setScope(e.target.value)}><option value="all">Meus dados e os familiares</option><option value="personal">Só meus dados pessoais</option><option value="family">Só despesas familiares</option></select></label><label>Pesquisar<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Descrição, categoria ou loja"/></label></div>}
@@ -77,7 +78,7 @@ export function FinanceApp({api,access,profile}:{api:FinanceAPI;access:Ready;pro
  <p className="small">Despesas por data da compra. Pagamentos de fatura e transferências não entram novamente nas despesas.</p>
  <section className="panel"><h2>Despesas da família por pagador</h2><p>Você: {money(rows.filter(r=>r.kind==='expense'&&r.scope==='family'&&own(r)).reduce((n,r)=>n+Number(r.amount_cents),0))}</p><p>Outro membro: {money(rows.filter(r=>r.kind==='expense'&&r.scope==='family'&&!own(r)).reduce((n,r)=>n+Number(r.amount_cents),0))}</p><p className="small">Comparativo informativo. Não gera dívidas entre vocês.</p></section>
  <section className="panel"><h2>Gastos por categoria</h2><CategoryChart rows={rows}/></section>
- <section className="panel"><h2>Contas que precisam de atenção</h2>{due.length?due.map(r=><p key={r.id}>{r.description} · {r.due_on} · {money(Number(r.amount_cents))}</p>):<p>Nenhuma conta vencida cadastrada.</p>}<button className="quiet" onClick={()=>setPage('due_items')}>Ver contas a vencer</button></section>
+ <section className="panel"><h2>Contas que precisam de atenção</h2>{due.length?due.map(r=><p key={r.id}>{r.description} · {r.due_on} · {money(Number(r.amount_cents))}</p>):<p>Nenhuma conta vencida cadastrada.</p>}<div className="toolbar"><button className="quiet" onClick={()=>setPage('due_items')}>Ver contas a vencer</button>{notificationsAvailable()&&<button className="quiet" onClick={()=>void action(async()=>{if(!await enableNotifications())throw Error('As notificações foram bloqueadas neste aparelho.');const sent=notifyDueItems(due);setNotice(sent?'Lembretes ativados neste aparelho.':'Não há lembretes novos para enviar.');})}>Ativar lembretes</button>}</div></section>
  </>}
  {page==='transactions'&&<TransactionList rows={rows} userId={access.userId} onVoid={r=>action(async()=>{if(confirm('Estornar este lançamento? O histórico será preservado.'))await post({action:'void',transaction_id:r.id,version:r.version});})}/>}
  {baseFields[page]&&<>
