@@ -38,3 +38,10 @@ Atualizado em 28/10/2026. PRs #1 a #5 integrados à `main`; PR6 em revisão na b
 4. Atualizar no Supabase Auth a URL de redirecionamento para `https://wandesonmarcone.github.io/financeiro-pessoal/` e confirmar o novo endereço do GitHub Pages após a integração do PR6.
 
 Esses itens impedem chamar o sistema de produção concluída, mas o código financeiro não é fictício: os módulos e regras já executam contra o schema aplicado.
+# Compra com várias páginas de cupom
+
+- Preparada a estrutura de uma compra formada por até 50 fotos, preservando cada imagem e sua ordem.
+- A confirmação automática só ocorre quando a soma dos itens confere com o total pago, ou com subtotal menos desconto.
+- Sobreposições entre fotos só são eliminadas quando o número fiscal do item e os valores coincidem; produtos parecidos não são apagados por engano.
+- O usuário pode escolher um estabelecimento conhecido (Assaí, Supermercado BH e Supermercados Leal) ou informar outro nome. O texto OCR é apenas sugestão.
+
