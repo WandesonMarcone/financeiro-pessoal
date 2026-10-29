@@ -71,7 +71,7 @@ export function FinanceApp({api,access,profile}:{api:FinanceAPI;access:Ready;pro
  function newEditor(table:string,row?:Row){setEditor({table,row});}
  async function archive(table:string,row:Row){if(!confirm('Arquivar este registro? Ele continuará preservado no histórico.'))return;await save(table,{archived:true},row);}
  const filtered=active(data,page).filter(r=>!search||String(r.name??r.description??r.product_key??r.filename??'').toLowerCase().includes(search.toLowerCase()));
- const nav=simple?['dashboard','transactions','shopping_items','documents','profile']:Object.keys(labels);
+ const nav=simple?['dashboard','transactions','shopping_items','documents','control','profile']:Object.keys(labels);
  return <div className="workspace">
  <div className="workspace-top"><div><p className="eyebrow">{access.householdName}</p><h1>{labels[page]}</h1></div><button onClick={()=>setTransaction({})}>+ Registrar gasto</button></div>
  <div className="toolbar"><label className="check"><input type="checkbox" checked={simple} onChange={e=>{setSimple(e.target.checked);localStorage.setItem('simple:'+access.userId,String(e.target.checked));setPage('dashboard');}}/>Modo simples</label><span className="badge">{offline?'Offline · dados deste aparelho':'Conectado'}</span><button className="quiet" onClick={()=>{setPage('sync');}}>Fila: {pending.length}</button><button className="quiet" onClick={()=>void load()}>Atualizar</button></div>
