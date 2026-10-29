@@ -10,7 +10,8 @@ function api():FinanceAPI{return {
  post:vi.fn().mockResolvedValue(undefined),
  save:vi.fn().mockResolvedValue(undefined),
  upload:vi.fn().mockResolvedValue(undefined),
- download:vi.fn().mockResolvedValue(new Blob())
+ download:vi.fn().mockResolvedValue(new Blob()),
+ removeDocument:vi.fn().mockResolvedValue(undefined)
 };}
 
 describe('aplicativo financeiro',()=>{
