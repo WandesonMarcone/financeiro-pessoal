@@ -17,4 +17,9 @@ describe('sugestões da nota fiscal',()=>{
   expect(productsMatchReceiptTotal(products,'31,49')).toEqual({expected:3149,actual:3021,consistent:false});
   expect(productsMatchReceiptTotal(products,'30,21')).toEqual({expected:3021,actual:3021,consistent:true});
  });
+ it('tolera um kg imperfeito, mas recusa quantidade incompatível com preço e total',()=>{
+  expect(parseReceiptProducts('BATATA 2,305 KA X 3,98 9,17\nREFRIGERANTE 106 EU X 1,28 1,28')).toEqual([
+   {name:'BATATA',quantity:2.305,unit:'kg',total_cents:917}
+  ]);
+ });
 });
