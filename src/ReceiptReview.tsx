@@ -1,6 +1,7 @@
 import {useEffect,useState} from 'react';
-import {active,cents,money,productKey,today,type Row,type Snapshot} from './domain';
+import {active,money,productKey,today,type Row,type Snapshot} from './domain';
 import {parseReceiptProducts,type ReceiptProduct} from './receipts';
+import {CurrencyInput} from './CurrencyInput';
 
 type Draft=ReceiptProduct&{key:string;selected:boolean;saved:boolean};
 export function ReceiptReview({text,document,merchant,date,data,save}:{text:string;document?:Row;merchant:string;date:string;data:Snapshot;save:(table:string,values:any)=>Promise<void>}){
@@ -30,7 +31,7 @@ export function ReceiptReview({text,document,merchant,date,data,save}:{text:stri
    <label>Produto<input value={row.name} disabled={busy||row.saved} onChange={e=>change(row.key,{name:e.target.value})}/></label>
    <label>Quantidade<input type="number" min="0.0001" step="any" inputMode="decimal" value={row.quantity} disabled={busy||row.saved} onChange={e=>change(row.key,{quantity:Number(e.target.value)})}/></label>
    <label>Unidade<select value={row.unit} disabled={busy||row.saved} onChange={e=>change(row.key,{unit:e.target.value as ReceiptProduct['unit']})}><option value="un">un</option><option value="kg">kg</option><option value="l">l</option></select></label>
-   <label>Preço total (R$)<input inputMode="decimal" key={`${row.key}:${row.saved}`} defaultValue={(row.total_cents/100).toFixed(2).replace('.',',')} disabled={busy||row.saved} onBlur={e=>{try{change(row.key,{total_cents:cents(e.target.value)});setError('');}catch{setError('Preço inválido: use reais e centavos.');}}}/></label>
+   <label>Preço total (R$)<CurrencyInput key={`${row.key}:${row.saved}`} defaultValue={(row.total_cents/100).toFixed(2)} disabled={busy||row.saved} onAmountChange={total_cents=>{if(total_cents===undefined){setError('Preço inválido.');return;}change(row.key,{total_cents});setError('');}}/></label>
    <span className="small">{money(row.total_cents)}</span>
   </div>)}
   {error&&<p role="alert" className="error">{error}</p>}{notice&&<p role="status">{notice}</p>}
