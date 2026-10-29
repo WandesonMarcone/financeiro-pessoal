@@ -18,7 +18,13 @@ export function App({gateway}:{gateway:Gateway|null}) {
     if(!disposed&&ticket===sequence)setView(access);
    }).catch(()=>{if(!disposed&&ticket===sequence)setView({kind:'error'});});},0);
   };
-  const unsubscribe=gateway.subscribe(event=>{if(event==='PASSWORD_RECOVERY')setRecovery(true);refresh(true);});
+  // Android may emit TOKEN_REFRESHED when it returns from the camera/gallery.
+  // Keeping the current view mounted is important: otherwise the file input and
+  // its in-memory selection are lost while the session is checked again.
+  const unsubscribe=gateway.subscribe(event=>{
+   if(event==='PASSWORD_RECOVERY')setRecovery(true);
+   refresh(event==='SIGNED_OUT'||event==='USER_DELETED');
+  });
   refresh(true);
   const revalidate=()=>refresh();
   const poll=setInterval(revalidate,60000);
