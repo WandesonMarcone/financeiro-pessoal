@@ -1,5 +1,6 @@
 import {useRef,useState,type FormEvent} from 'react';
 import {active,cents,today,type Snapshot} from './domain';
+import {CurrencyInput} from './CurrencyInput';
 export function TransactionForm({snapshot,initial={},onSave,onClose,simple=false}:{snapshot:Snapshot;initial?:any;onSave:(payload:any,id?:string)=>Promise<void>;onClose:()=>void;simple?:boolean}){
  const operationId=useRef(crypto.randomUUID());
  const [kind,setKind]=useState(simple?'expense':initial.kind??'expense'),[method,setMethod]=useState(simple?'untracked':initial.card_id?'card':initial.account_id?'account':'untracked'),[busy,setBusy]=useState(false),[error,setError]=useState('');
@@ -15,7 +16,7 @@ export function TransactionForm({snapshot,initial={},onSave,onClose,simple=false
  return <section className="editor"><div className="row spread"><div><p className="eyebrow">{simple?'LANÇAMENTO RÁPIDO':'MOVIMENTAÇÃO FINANCEIRA'}</p><h2>{initial.due_item_id?'Pagar conta':simple?'Registrar gasto':'Novo lançamento'}</h2></div><button className="quiet" onClick={onClose}>Fechar</button></div><form onSubmit={submit} className="grid-form">
  {!simple&&<label>Tipo<select value={kind} onChange={e=>setKind(e.target.value)} disabled={!!initial.due_item_id}><option value="expense">Despesa</option><option value="income">Receita</option><option value="transfer">Transferência</option><option value="card_payment">Pagamento de fatura</option></select></label>}
  <label>Descrição<input name="description" required maxLength={250} defaultValue={initial.description??''}/></label>
- <label>Valor (R$)<input name="amount" inputMode="decimal" required defaultValue={initial.amount_cents?(initial.amount_cents/100).toFixed(2):''}/></label>
+ <label>Valor (R$)<CurrencyInput aria-label="Valor (R$)" name="amount" required defaultValue={initial.amount_cents?(initial.amount_cents/100).toFixed(2):''}/><small>Digite só os números: 1000 vira R$ 10,00.</small></label>
  <label>Data<input name="occurred_on" type="date" required defaultValue={initial.occurred_on??today()}/></label>
  {kind==='expense'&&<>{!simple&&<label>Pagamento<select value={method} onChange={e=>setMethod(e.target.value)}><option value="untracked">Sem vincular uma conta</option><option value="account">Conta / dinheiro / Pix</option><option value="card">Cartão de crédito</option></select></label>}</>}
  {(kind==='income'||kind==='transfer'||kind==='card_payment'||method==='account')&&<label>Conta de origem<select name="account_id" required defaultValue={initial.account_id??''}><option value="">Selecione</option>{accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label>}
