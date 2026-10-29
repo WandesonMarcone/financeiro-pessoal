@@ -66,10 +66,10 @@ select public.post_transaction('00000000-0000-4000-8000-000000000602',
 
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000101',true);
 do $$ begin
- if (select count(*) from public.accounts)<>3 then raise exception 'Conta de B não foi compartilhada'; end if;
+ if (select count(*) from public.accounts)<>2 then raise exception 'Conta privada de B exposta'; end if;
  if (select count(*) from public.transactions where id='00000000-0000-4000-8000-000000000601')<>1 then raise exception 'Despesa familiar de B não compartilhada'; end if;
- if (select count(*) from public.transactions where id='00000000-0000-4000-8000-000000000602')<>1 then raise exception 'Lançamento de B não foi compartilhado'; end if;
- if (select count(*) from public.ledger_entries where account_id='00000000-0000-4000-8000-000000000303')<>1 then raise exception 'Movimento de B não foi compartilhado'; end if;
+ if (select count(*) from public.transactions where id='00000000-0000-4000-8000-000000000602')<>0 then raise exception 'Despesa pessoal de B exposta'; end if;
+ if (select count(*) from public.ledger_entries where account_id='00000000-0000-4000-8000-000000000303')<>0 then raise exception 'Movimento privado de B exposto'; end if;
  begin
   perform public.post_transaction(gen_random_uuid(),
    '{"household_id":"00000000-0000-4000-8000-000000000201","kind":"expense","scope":"personal","description":"Usar conta alheia","amount_cents":1,"occurred_on":"2026-10-12","account_id":"00000000-0000-4000-8000-000000000303"}');
