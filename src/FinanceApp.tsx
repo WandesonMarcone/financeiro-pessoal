@@ -130,7 +130,20 @@ function ImportCSV({data,onPost}:{data:Snapshot;onPost:(p:any,id?:string)=>Promi
  {error&&<p role="alert">{error}</p>}{rows.length>0&&<button disabled={!account||busy} onClick={async()=>{setBusy(true);setError('');try{for(let i=0;i<rows.length;i++){const r=rows[i];if(!r.selected)continue;const {selected,duplicate,operationId,...payload}=r;await onPost({...payload,account_id:account},operationId);setRows(old=>old.map((x,j)=>i===j?{...x,selected:false}:x));}setRows([]);}catch(e){setError(message(e));}finally{setBusy(false);}}}>{busy?'Importando…':'Confirmar selecionados'}</button>}</section>;}
 function Documents({data,api,access,save,refresh,onTransaction,onItem}:{data:Snapshot;api:FinanceAPI;access:Ready;save:(t:string,d:any,r?:Row)=>Promise<void>;refresh:()=>Promise<void>;onTransaction:(p:any)=>void;onItem:(r:Row)=>void}){
  const [file,setFile]=useState<File>(),scope='family',[busy,setBusy]=useState(false),[error,setError]=useState(''),[text,setText]=useState(''),[progress,setProgress]=useState(''),[qr,setQr]=useState(''),[suggestion,setSuggestion]=useState<any>(),[selectedDocId,setSelectedDocId]=useState(''),[restored,setRestored]=useState(false);
- useEffect(()=>{let mounted=true;void localDB.uploadDrafts.get(uploadDraftId(access.userId)).then(draft=>{if(!mounted||!draft)return;setFile(new File([draft.file],draft.filename,{type:draft.mimeType}));setRestored(true);});return()=>{mounted=false;};},[access.userId]);
+ useEffect(()=>{
+  let mounted=true,timeout:ReturnType<typeof setTimeout>|undefined;
+  // Some Android browsers briefly recreate the page after closing the photo
+  // picker. Retry a few times so a draft being written at that exact moment is
+  // still restored instead of silently disappearing.
+  const restore=async(attempt=0):Promise<void>=>{
+   const draft=await localDB.uploadDrafts.get(uploadDraftId(access.userId));
+   if(!mounted)return;
+   if(draft){setFile(new File([draft.file],draft.filename,{type:draft.mimeType}));setRestored(true);return;}
+   if(attempt<4)timeout=setTimeout(()=>void restore(attempt+1),[120,300,700,1400][attempt]);
+  };
+  void restore();
+  return()=>{mounted=false;clearTimeout(timeout);};
+ },[access.userId]);
  useEffect(()=>{if(file)void localDB.uploadDrafts.update(uploadDraftId(access.userId),{scope});},[file,scope,access.userId]);
  async function selectFile(next?:File){
   setError('');if(!next)return;
