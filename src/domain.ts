@@ -1,6 +1,6 @@
 export type Row = {id:string; [key:string]:any};
 export type Snapshot = Record<string,Row[]>;
-export const TABLES=['accounts','cards','transactions','ledger_entries','card_installments','invoice_payments','categories','budgets','goals','goal_contributions','assets','shopping_items','recurring_rules','due_items','documents','receipt_items','audit_events'] as const;
+export const TABLES=['accounts','cards','transactions','ledger_entries','card_installments','invoice_payments','categories','budgets','goals','goal_contributions','assets','shopping_items','recurring_rules','due_items','documents','receipt_batches','receipt_pages','receipt_items','audit_events'] as const;
 export const emptySnapshot=():Snapshot=>Object.fromEntries(TABLES.map(t=>[t,[]]));
 export const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 export const money=(n:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n/100);
