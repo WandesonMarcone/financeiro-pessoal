@@ -23,6 +23,11 @@ export function financeAPI(client:SupabaseClient<Database>){
  },
  async upload(id:string,file:File){const {error}=await db.storage.from('family-documents').upload(id,file,{upsert:false,contentType:file.type});if(error)throw Error(error.message);},
  async download(id:string){const {data,error}=await db.storage.from('family-documents').download(id);if(error)throw Error(error.message);return data;}
+ ,async removeDocument(id:string,password:string){
+  const {data:userData,error:userError}=await db.auth.getUser();if(userError||!userData.user?.email)throw Error('Não foi possível confirmar a conta atual. Entre novamente e tente.');
+  const {error:authError}=await db.auth.signInWithPassword({email:userData.user.email,password});if(authError)throw Error('Senha atual incorreta. O documento não foi apagado.');
+  const {error}=await db.storage.from('family-documents').remove([id]);if(error)throw Error(error.message);
+ }
  };
 }
 export type FinanceAPI=ReturnType<typeof financeAPI>;
