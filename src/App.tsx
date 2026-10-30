@@ -16,7 +16,7 @@ export function App({gateway}:{gateway:Gateway|null}) {
    clearTimeout(timer);
    timer=setTimeout(()=>{gateway.readAccess().then(access=>{
     if(!disposed&&ticket===sequence)setView(access);
-   }).catch(()=>{if(!disposed&&ticket===sequence)setView({kind:'error'});});},0);
+   }).catch(()=>{if(!disposed&&ticket===sequence)setView(previous=>previous.kind==='ready'?previous:{kind:'error'});});},0);
   };
   // Android may emit TOKEN_REFRESHED when it returns from the camera/gallery.
   // Keeping the current view mounted is important: otherwise the file input and
