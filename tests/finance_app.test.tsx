@@ -10,7 +10,8 @@ function api():FinanceAPI{return {
  post:vi.fn().mockResolvedValue(undefined),
  save:vi.fn().mockResolvedValue(undefined),
  upload:vi.fn().mockResolvedValue(undefined),
- download:vi.fn().mockResolvedValue(new Blob())
+ download:vi.fn().mockResolvedValue(new Blob()),
+ removeDocument:vi.fn().mockResolvedValue(undefined)
 };}
 
 describe('aplicativo financeiro',()=>{
@@ -25,7 +26,7 @@ describe('aplicativo financeiro',()=>{
   await user.type(screen.getByLabelText('Descrição'),'Mercado');
   await user.type(screen.getByLabelText('Valor (R$)'),'1234');
   expect(screen.getByLabelText('Valor (R$)')).toHaveValue('R$ 12,34');
-  await user.click(screen.getByRole('button',{name:'Registrar'}));
+  await user.click(screen.getByRole('button',{name:'Salvar compra'}));
   await waitFor(()=>expect(finance.post).toHaveBeenCalledTimes(1));
   expect(finance.post).toHaveBeenCalledWith(expect.any(String),expect.objectContaining({
    household_id:'house-a',kind:'expense',scope:'family',description:'Mercado',amount_cents:1234

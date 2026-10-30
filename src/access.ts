@@ -4,6 +4,7 @@ import {localDB,pendingFor,uploadDraftId} from './offline';
 import type {Database} from './database.types';
 export type Ready = {kind:'ready'; userId:string; householdId:string; householdName:string; displayName:string};
 export type Access = {kind:'signedout'} | {kind:'denied'} | Ready;
+export type Usage = {documents:number;photos:number;documentBytes:number;transactions:number;receiptItems:number;recurringRules:number;cards:number};
 export interface Gateway {
  finance?:FinanceAPI;
  readAccess():Promise<Access>;
@@ -12,7 +13,11 @@ export interface Gateway {
  signOut():Promise<void>;
  requestPasswordReset(email:string):Promise<void>;
  updatePassword(password:string):Promise<void>;
- saveProfile(userId:string,name:string):Promise<void>;
+ getProfile():Promise<{email:string;avatarUrl:string}>;
+ getUsage():Promise<Usage>;
+ saveProfile(userId:string,name:string,file?:File):Promise<void>;
+ updateEmail(email:string):Promise<void>;
+ changePassword(currentPassword:string,newPassword:string):Promise<void>;
 }
 export function supabaseGateway(client:SupabaseClient<Database>):Gateway {
  const accessKey='nossa-casa:last-access';
@@ -63,14 +68,38 @@ export function supabaseGateway(client:SupabaseClient<Database>):Gateway {
    sessionStorage.removeItem(accessKey);lastAccess=undefined;
    const {error}=await client.auth.signOut({scope:'local'});if(error) throw error;
   },
-  async saveProfile(userId,name){
-   const existing=await client.from('profiles').select('user_id').eq('user_id',userId).maybeSingle();
+  async getProfile(){
+   const db=client as SupabaseClient<any>,{data:userData,error:userError}=await client.auth.getUser();if(userError||!userData.user?.email)throw userError??Error('Sessão inválida.');
+   const {data:profile,error}=await db.from('profiles').select('avatar_path').eq('user_id',userData.user.id).maybeSingle();if(error)throw error;
+   let avatarUrl='';if(profile?.avatar_path){const result=await db.storage.from('profile-avatars').createSignedUrl(profile.avatar_path,60*10);if(result.error)throw result.error;avatarUrl=result.data.signedUrl;}
+   return {email:userData.user.email,avatarUrl};
+  },
+  async getUsage(){
+   const db=client as SupabaseClient<any>;
+   const [docs,transactions,items,rules,cards]=await Promise.all([
+    db.from('documents').select('size_bytes,mime_type').eq('archived',false),
+    db.from('transactions').select('*',{count:'exact',head:true}).eq('status','posted'),
+    db.from('receipt_items').select('*',{count:'exact',head:true}).eq('archived',false),
+    db.from('recurring_rules').select('*',{count:'exact',head:true}).eq('archived',false),
+    db.from('cards').select('*',{count:'exact',head:true}).eq('archived',false)
+   ]);
+   for(const result of [docs,transactions,items,rules,cards])if(result.error)throw result.error;
+   const rows=docs.data??[];
+   return {documents:rows.length,photos:rows.filter(row=>String(row.mime_type).startsWith('image/')).length,documentBytes:rows.reduce((sum,row)=>sum+Number(row.size_bytes||0),0),transactions:transactions.count??0,receiptItems:items.count??0,recurringRules:rules.count??0,cards:cards.count??0};
+  },
+  async saveProfile(userId,name,file){
+   const db=client as SupabaseClient<any>;const existing=await db.from('profiles').select('user_id,avatar_path').eq('user_id',userId).maybeSingle();
    if(existing.error) throw existing.error;
+   let avatarPath=existing.data?.avatar_path??'';
+   if(file){if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>2097152)throw Error('Use JPEG, PNG ou WebP de até 2 MB.');avatarPath=`${userId}/avatar.${file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg'}`;const upload=await db.storage.from('profile-avatars').upload(avatarPath,file,{upsert:true,contentType:file.type});if(upload.error)throw upload.error;}
    const request=existing.data
-    ?client.from('profiles').update({display_name:name}).eq('user_id',userId)
-    :client.from('profiles').insert({user_id:userId,display_name:name});
+    ?db.from('profiles').update({display_name:name,avatar_path:avatarPath}).eq('user_id',userId)
+    :db.from('profiles').insert({user_id:userId,display_name:name,avatar_path:avatarPath});
    const {error}=await request.select('user_id').single();
    if(error) throw error;
+  },
+  async updateEmail(email){const {error}=await (client as any).auth.updateUser({email},{emailRedirectTo:new URL(import.meta.env.BASE_URL,window.location.origin).toString()});if(error)throw error;},
+  async changePassword(currentPassword,newPassword){const {error}=await (client as any).auth.updateUser({current_password:currentPassword,password:newPassword});if(error)throw error;
   }
  };
 }
