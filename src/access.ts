@@ -78,7 +78,7 @@ export function supabaseGateway(client:SupabaseClient<Database>):Gateway {
    const db=client as SupabaseClient<any>;
    const [docs,transactions,items,rules,cards]=await Promise.all([
     db.from('documents').select('size_bytes,mime_type').eq('archived',false),
-    db.from('transactions').select('*',{count:'exact',head:true}).eq('archived',false),
+    db.from('transactions').select('*',{count:'exact',head:true}).eq('status','posted'),
     db.from('receipt_items').select('*',{count:'exact',head:true}).eq('archived',false),
     db.from('recurring_rules').select('*',{count:'exact',head:true}).eq('archived',false),
     db.from('cards').select('*',{count:'exact',head:true}).eq('archived',false)
