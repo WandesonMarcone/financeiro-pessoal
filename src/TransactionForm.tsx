@@ -5,8 +5,8 @@ import { CurrencyInput } from './CurrencyInput';
 function CardChoice({ card, selected, onSelect }: { card: any; selected: boolean; onSelect: () => void }) {
   const name = String(card.name ?? '');
   const normalized = name.toLowerCase();
-  const tone = normalized.includes('nubank') ? 'nubank' : normalized.includes('caixa') ? 'caixa' : normalized.includes('bradesco') ? 'bradesco' : '';
-  const issuer = normalized.includes('nubank') ? 'NUBANK' : normalized.includes('caixa') ? 'CAIXA' : normalized.includes('bradesco') ? 'BRADESCO' : 'CARTÃO';
+  const tone = normalized.includes('nubank') ? 'nubank' : normalized.includes('caixa') ? 'caixa' : normalized.includes('inter') ? 'inter' : normalized.includes('picpay') ? 'picpay' : normalized.includes('mercado') ? 'mercado-pago' : normalized.includes('bradesco') ? 'bradesco' : 'neutral';
+  const issuer = normalized.includes('nubank') ? 'NUBANK' : normalized.includes('caixa') ? 'CAIXA' : normalized.includes('inter') ? 'INTER' : normalized.includes('picpay') ? 'PICPAY' : normalized.includes('mercado') ? 'MERCADO PAGO' : normalized.includes('bradesco') ? 'BRADESCO' : 'CARTÃO';
 
   return <button type="button" aria-pressed={selected} className={'card-choice' + (selected ? ' selected' : '')} onClick={onSelect}>
     <span className={'card-visual ' + tone}>
