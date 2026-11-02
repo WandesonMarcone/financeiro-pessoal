@@ -1,7 +1,7 @@
 export type Row = {id:string; [key:string]:any};
 export type CardScheduleRow = Row & {transaction:Row};
 export type Snapshot = Record<string,Row[]>;
-export const TABLES=['accounts','cards','transactions','ledger_entries','card_installments','invoice_payments','categories','budgets','goals','goal_contributions','assets','shopping_items','recurring_rules','due_items','documents','receipt_batches','receipt_pages','receipt_items','audit_events'] as const;
+export const TABLES=['accounts','cards','transactions','ledger_entries','card_installments','invoice_payments','categories','budgets','goals','goal_contributions','payroll_profiles','payroll_deductions','assets','shopping_items','recurring_rules','due_items','documents','receipt_batches','receipt_pages','receipt_items','audit_events'] as const;
 export const emptySnapshot=():Snapshot=>Object.fromEntries(TABLES.map(t=>[t,[]]));
 export const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 export const money=(n:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n/100);
@@ -22,6 +22,19 @@ export function invoices(s:Snapshot){const ids=new Set(posted(s).map(t=>t.id));c
 export function cardSchedule(s:Snapshot):CardScheduleRow[]{const transactions=new Map(posted(s).map(transaction=>[transaction.id,transaction]));const rows:(Row&{transaction?:Row})[]=s.card_installments.map(installment=>({...installment,transaction:transactions.get(installment.transaction_id)}));return rows.filter((row):row is CardScheduleRow=>Boolean(row.transaction)).sort((a,b)=>a.due_on.localeCompare(b.due_on)||a.number-b.number);}
 export function summary(rows:Row[]){return rows.filter(r=>r.status==='posted').reduce((a,r)=>{if(r.kind==='income')a.income+=Number(r.amount_cents);if(r.kind==='expense')a.expense+=Number(r.amount_cents);return a;},{income:0,expense:0});}
 export function monthDay(month:string,day:number){const [y,m]=month.slice(0,7).split('-').map(Number);const d=Math.min(day,new Date(Date.UTC(y,m,0)).getUTCDate());return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
+export function businessDaysBetween(from:string,to:string){
+ const start=new Date(`${from}T12:00:00Z`),end=new Date(`${to}T12:00:00Z`);
+ if(!Number.isFinite(start.valueOf())||!Number.isFinite(end.valueOf())||end<=start)return 0;
+ let days=0;
+ for(const cursor=new Date(start);cursor<end;cursor.setUTCDate(cursor.getUTCDate()+1)){const day=cursor.getUTCDay();if(day!==0&&day!==6)days++;}
+ return days;
+}
+/** Estimativa composta usando 252 dias úteis. Não considera imposto, feriados ou regras do produto. */
+export function projectCdiCents(principal:number,cdiAnnualPercent:number,cdiPercent:number,businessDays:number){
+ if(!Number.isFinite(principal)||principal<0||!Number.isFinite(cdiAnnualPercent)||!Number.isFinite(cdiPercent)||businessDays<=0)return Math.round(principal);
+ const dailyCdi=Math.pow(1+cdiAnnualPercent/100,1/252)-1;
+ return Math.round(principal*Math.pow(1+dailyCdi*(cdiPercent/100),businessDays));
+}
 export function normalizeUnit(quantity:number,unit:string){if(!Number.isFinite(quantity)||quantity<=0)throw Error('Quantidade inválida');if(unit==='g')return {quantity:quantity/1000,unit:'kg'};if(unit==='ml')return {quantity:quantity/1000,unit:'l'};if(!['un','kg','l'].includes(unit))throw Error('Unidade não comparável');return {quantity,unit};}
 export const productKey=(s:string)=>s.trim().toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
 export function fingerprint(r:any){return [r.occurred_on,r.kind,r.amount_cents,productKey(r.description??'')].join('|');}

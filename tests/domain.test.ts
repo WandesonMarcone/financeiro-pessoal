@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {balance,cents,emptySnapshot,fingerprint,invoices,monthDay,normalizeUnit,productKey,splits,summary} from '../src/domain';
+import {balance,businessDaysBetween,cents,emptySnapshot,fingerprint,invoices,monthDay,normalizeUnit,productKey,projectCdiCents,splits,summary} from '../src/domain';
 
 describe('regras monetárias',()=>{
  it('converte reais em centavos sem ponto flutuante',()=>{
@@ -47,5 +47,13 @@ describe('normalização e duplicidade',()=>{
   expect(productKey('  Café   ÁRABICA ')).toBe('cafe arabica');
   expect(fingerprint({occurred_on:'2026-10-01',kind:'expense',amount_cents:100,description:' Café '}))
    .toBe('2026-10-01|expense|100|cafe');
+ });
+});
+
+describe('projeções informativas',()=>{
+ it('conta dias úteis sem inventar feriados e aplica CDI composto',()=>{
+  expect(businessDaysBetween('2026-11-02','2026-11-09')).toBe(5);
+  expect(projectCdiCents(100000,10,120,0)).toBe(100000);
+  expect(projectCdiCents(100000,10,120,21)).toBeGreaterThan(100000);
  });
 });
