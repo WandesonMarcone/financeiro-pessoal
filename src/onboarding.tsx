@@ -4,6 +4,7 @@ import {active} from './domain';
 
 export const DEFAULT_CATEGORIES = [
  'Alimentação',
+ 'Lanche',
  'Moradia',
  'Água e energia',
  'Transporte',
