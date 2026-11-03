@@ -60,6 +60,34 @@ Essa área serve para planejar o líquido antes de receber. Ela não cria receit
 
 Assim, uma consulta feita hoje pode ser prevista para daqui a dois ou três meses sem aparecer duas vezes como despesa.
 
+## Conferir contracheque, FUSEx e empréstimos automáticos
+
+Use esta rotina para transformar cada contracheque em histórico verificável:
+
+1. Em **Contracheque previsto**, cadastre a fonte do salário, o valor bruto aproximado e o dia de pagamento.
+2. Em **Contracheques**, crie um registro para cada mês usando os três totais do documento: receitas, descontos e líquido recebido.
+3. No registro mensal, adicione uma rubrica para cada linha importante. Copie o código e a descrição do documento, por exemplo `NR0001 - SOLDO`, `ND0001 - FUSEx` ou `ND0013 - DESPESA MÉDICA - FUSEx`.
+4. Para cada desconto, selecione a categoria correta: saúde/FUSEx, pensão/contribuição militar, imposto ou outro. O relatório anual soma exatamente as rubricas registradas.
+
+Para uma cirurgia ou outra despesa médica parcelada:
+
+1. Em **Compromissos e conferências**, crie `Cirurgia da KAMILLY` como `Despesa médica/FUSEx` e informe o valor total que precisa ser acompanhado.
+2. Escolha `Vem no contracheque`.
+3. Cadastre o valor e a data esperados de cada desconto conhecido.
+4. Quando o novo contracheque chegar, registre a rubrica real e vincule-a a esse compromisso.
+5. O cartão do compromisso mostra: total conhecido, quanto já apareceu em descontos e quanto ainda falta conferir. Cada cobrança planejada indica se confere, se está pendente ou se houve diferença.
+
+O sistema só consegue afirmar que o valor está correto quando há dois lados para comparar: o valor/orçamento original da cirurgia e os valores efetivamente lançados nos contracheques. Sem o documento da cobrança original, ele pode mostrar quanto foi descontado, mas não pode concluir se o parcelamento inteiro está correto.
+
+Para o empréstimo que sai automaticamente no mesmo dia em que o salário cai:
+
+1. Crie um compromisso do tipo `Empréstimo`.
+2. Escolha `Débito automático após cair o salário` - nunca `Vem no contracheque`.
+3. Cadastre cada cobrança esperada.
+4. Depois de conferir a movimentação bancária, informe o valor e a data realmente debitados. O aplicativo mostrará qualquer diferença.
+
+Além da conferência, registre a saída real como despesa da conta bancária. Dessa forma ela aparece no saldo, nos relatórios anuais e não é confundida com desconto de contracheque.
+
 ## Notas fiscais, QR Code e produtos
 
 1. Em **Notas e documentos**, escolha foto ou PDF.
