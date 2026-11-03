@@ -11,6 +11,7 @@ function api():FinanceAPI{return {
  save:vi.fn().mockResolvedValue(undefined),
  upload:vi.fn().mockResolvedValue(undefined),
  download:vi.fn().mockResolvedValue(new Blob()),
+ analyzeReceiptWithAI:vi.fn().mockResolvedValue({}),
  removeDocument:vi.fn().mockResolvedValue(undefined)
 };}
 
