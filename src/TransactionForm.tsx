@@ -1,19 +1,11 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { active, cents, today, type Snapshot } from './domain';
 import { CurrencyInput } from './CurrencyInput';
+import {CardVisual} from './CardVisual';
 
 function CardChoice({ card, selected, onSelect }: { card: any; selected: boolean; onSelect: () => void }) {
-  const name = String(card.name ?? '');
-  const normalized = name.toLowerCase();
-  const tone = normalized.includes('nubank') ? 'nubank' : normalized.includes('caixa') ? 'caixa' : normalized.includes('inter') ? 'inter' : normalized.includes('picpay') ? 'picpay' : normalized.includes('mercado') ? 'mercado-pago' : normalized.includes('bradesco') ? 'bradesco' : 'neutral';
-  const issuer = normalized.includes('nubank') ? 'NUBANK' : normalized.includes('caixa') ? 'CAIXA' : normalized.includes('inter') ? 'INTER' : normalized.includes('picpay') ? 'PICPAY' : normalized.includes('mercado') ? 'MERCADO PAGO' : normalized.includes('bradesco') ? 'BRADESCO' : 'CARTÃO';
-
   return <button type="button" aria-pressed={selected} className={'card-choice' + (selected ? ' selected' : '')} onClick={onSelect}>
-    <span className={'card-visual ' + tone}>
-      <small>{issuer}</small>
-      <strong>{name}</strong>
-      <small>Cartão de crédito</small>
-    </span>
+    <CardVisual card={card}/>
   </button>;
 }
 
@@ -111,7 +103,7 @@ export function TransactionForm({ snapshot, userId, initial = {}, onSave, onClos
       <details className="quick-details" open={advanced || Boolean(initial.due_item_id)}>
         <summary>Mais detalhes (opcional)</summary>
         <div className="grid-form quick-details-grid">
-          {['expense', 'income'].includes(kind) && <label>Categoria<input name="category" list="categories" defaultValue={initial.category ?? (simple ? 'Outros' : 'Outros')} /><datalist id="categories">{[...new Set(['Alimentação', 'Moradia', 'Transporte', 'Saúde', 'Lazer', 'Salário', 'Outros', ...active(snapshot, 'categories').map(category => category.name)])].map(category => <option key={category} value={category} />)}</datalist></label>}
+          {['expense', 'income'].includes(kind) && <label>Categoria<input name="category" list="categories" defaultValue={initial.category ?? (simple ? 'Outros' : 'Outros')} /><datalist id="categories">{[...new Set(['Alimentação', 'Lanche', 'Moradia', 'Transporte', 'Saúde', 'Lazer', 'Salário', 'Outros', ...active(snapshot, 'categories').map(category => category.name)])].map(category => <option key={category} value={category} />)}</datalist></label>}
           {['expense', 'income'].includes(kind) && <label>Estabelecimento (opcional)<input name="merchant" placeholder="Ex.: Supermercado BH" defaultValue={initial.merchant ?? ''} /></label>}
           <label>Data<input name="occurred_on" type="date" required defaultValue={initial.occurred_on ?? today()} /></label>
           {kind === 'card_payment' && <label>Vencimento da fatura<input name="due_on" type="date" required defaultValue={initial.due_on ?? ''} /></label>}
