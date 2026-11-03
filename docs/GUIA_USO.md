@@ -65,9 +65,11 @@ Assim, uma consulta feita hoje pode ser prevista para daqui a dois ou três mese
 Use esta rotina para transformar cada contracheque em histórico verificável:
 
 1. Em **Contracheque previsto**, cadastre a fonte do salário, o valor bruto aproximado e o dia de pagamento.
-2. Em **Contracheques**, crie um registro para cada mês usando os três totais do documento: receitas, descontos e líquido recebido.
+2. Em **Contracheques**, crie um registro para cada pagamento real usando os três totais do documento: receitas, descontos e líquido recebido. Escolha o tipo: salário normal, 13º (adiantamento ou complemento), férias ou ajuste; e informe a data em que o dinheiro caiu.
 3. No registro mensal, adicione uma rubrica para cada linha importante. Copie o código e a descrição do documento, por exemplo `NR0001 - SOLDO`, `ND0001 - FUSEx` ou `ND0013 - DESPESA MÉDICA - FUSEx`.
 4. Para cada desconto, selecione a categoria correta: saúde/FUSEx, pensão/contribuição militar, imposto ou outro. O relatório anual soma exatamente as rubricas registradas.
+
+O salário bruto em **Meu salário** é só uma referência de planejamento; não altere esse cadastro todo mês e ele não lança dinheiro no sistema. Exemplo: registre a metade do 13º como `13º - adiantamento` no mês em que entrar; registre as férias como `Férias` em janeiro; em fevereiro, registre o contracheque normal com o líquido efetivamente menor. Assim os relatórios refletem o que de fato caiu, sem tentar adivinhar valores futuros.
 
 Para uma cirurgia ou outra despesa médica parcelada:
 
