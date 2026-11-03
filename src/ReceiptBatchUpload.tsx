@@ -36,7 +36,7 @@ export function ReceiptBatchUpload({api,access,data,refresh}:{api:FinanceAPI;acc
    const fiscalKey='';
    if(fiscalKey&&data.receipt_batches.some(row=>row.fiscal_key===fiscalKey&&!row.archived))throw Error('Esta nota fiscal já foi registrada.');
    const batchId=crypto.randomUUID();
-   await api.save('receipt_batches' as any,{id:batchId,household_id:access.householdId,owner_user_id:access.userId,scope:'family',merchant:selectedStore,purchased_on:finalAnalysis.date||today(),subtotal_cents:finalAnalysis.subtotal?cents(finalAnalysis.subtotal):null,discount_cents:finalAnalysis.discount?cents(finalAnalysis.discount):0,total_cents:cents(finalAnalysis.total),payment_method:'',fiscal_key:fiscalKey,status:'confirmed',version:1} as any);
+   await api.save('receipt_batches' as any,{id:batchId,household_id:access.householdId,owner_user_id:access.userId,scope:'family',merchant:selectedStore,purchased_on:finalAnalysis.date||today(),subtotal_cents:finalAnalysis.subtotal?cents(finalAnalysis.subtotal):null,discount_cents:finalAnalysis.discount?cents(finalAnalysis.discount):0,total_cents:cents(finalAnalysis.total),payment_method:finalAnalysis.paymentMethod??'',fiscal_key:fiscalKey,status:'confirmed',version:1} as any);
    const docs:any[]=[];
    for(let index=0;index<files.length;index++){
     const file=files[index],hash=await checksum(file);let doc=data.documents.find(row=>row.checksum===hash&&row.owner_user_id===access.userId&&!row.archived);
@@ -57,7 +57,8 @@ export function ReceiptBatchUpload({api,access,data,refresh}:{api:FinanceAPI;acc
   {store.startsWith('Outro')&&<label>Nome do estabelecimento<input value={otherStore} onChange={event=>setOtherStore(event.target.value)} placeholder="Ex.: Mercado do bairro"/></label>}
   <div className="toolbar"><button type="button" disabled={!files.length||busy} onClick={()=>void read()}>{busy?'Lendo…':'Ler todas as fotos'}</button>{analyses.length===files.length&&<button type="button" disabled={!ready||busy} onClick={()=>void confirm()}>{busy?'Salvando…':`Confirmar compra (${products.length} itens)`}</button>}</div>
   {progress&&<p role="status">{progress}</p>}{error&&<p role="alert" className="error">{error}</p>}{notice&&<p role="status">{notice}</p>}
-  {analyses.length===files.length&&<><p>{products.length} item(ns) lido(s), em {files.length} foto(s). Soma dos itens: {money(check.actual)}{finalAnalysis?.discount?` · desconto: ${money(cents(finalAnalysis.discount))}`:''} · valor pago: {finalAnalysis?.total?money(cents(finalAnalysis.total)):'não identificado'}.</p>
+  {analyses.length===files.length&&<><p>{products.length} item(ns) lido(s), em {files.length} foto(s). Soma dos itens: {money(check.actual)}{finalAnalysis?.discount?` · desconto: ${money(cents(finalAnalysis.discount))}`:''} · valor pago: {finalAnalysis?.total?money(cents(finalAnalysis.total)):'não identificado'}{finalAnalysis?.paymentMethod?` · ${finalAnalysis.paymentMethod}`:''}.</p>
+   <div className="receipt-preview">{products.map((product,index)=><p key={`${product.sourceKey??product.name}-${index}`}><strong>{product.name}</strong> · {product.quantity} {product.unit} · {money(product.unit_cents??Math.round(product.total_cents/product.quantity))}/{product.unit} · {money(product.total_cents)}</p>)}</div>
    {check.consistent?<p role="status">Compra conferida. A confirmação salva tudo como uma única compra.</p>:<p role="alert" className="error">A soma ainda não confere. Por segurança, os itens não serão salvos automaticamente.</p>}
   </>}</section>;
 }
