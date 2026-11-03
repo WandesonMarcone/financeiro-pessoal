@@ -105,6 +105,7 @@ export function FinanceApp({api,access,profile}:{api:FinanceAPI;access:Ready;pro
  {loading?<p role="status">Carregando seus dados…</p>:<>
  {['dashboard','transactions','reports'].includes(page)&&<div className="filters"><label>Mês<input type="month" value={month} onChange={e=>setMonth(e.target.value)}/></label><label>Pesquisar<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Descrição, categoria ou loja"/></label></div>}
  {page==='dashboard'&&<>
+ <section className="panel dashboard-actions"><h2>O que você quer fazer?</h2><div className="toolbar"><button onClick={()=>setTransaction({})}>Registrar compra</button><button className="quiet" onClick={()=>setPage('documents')}>Ler cupom</button><button className="quiet" onClick={()=>setPage('cards')}>Ver faturas</button></div></section>
  <SetupGuide snapshot={data} onSeedCategories={seedCategories} onOpen={table=>{if(table==='transactions'){setTransaction({});return;}setPage(table);setSearch('');}}/>
  <div className="metrics"><Metric title="Receitas" value={money(totals.income)}/><Metric title="Despesas" value={money(totals.expense)}/><Metric title="Resultado do período" value={money(totals.income-totals.expense)}/><Metric title="Saldo das minhas contas" value={money(active(data,'accounts').reduce((n,a)=>n+balance(data,a),0))}/></div>
  <p className="small">Despesas por data da compra. Pagamentos de fatura e transferências não entram novamente nas despesas.</p>
