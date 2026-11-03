@@ -1,6 +1,6 @@
 import {cents,productKey} from './domain';
 export const receiptCategories=['Alimentação','Bebidas','Higiene pessoal','Limpeza','Combustível','Lanche','Saúde','Outros'] as const;
-export type ReceiptProduct={name:string;quantity:number;unit:'un'|'kg'|'l';total_cents:number;unit_cents?:number;category?:string;sourceKey?:string};
+export type ReceiptProduct={name:string;brand?:string;quantity:number;unit:'un'|'kg'|'l';total_cents:number;unit_cents?:number;category?:string;sourceKey?:string};
 export type ReceiptAnalysis={text:string;total:string;subtotal:string;discount:string;date:string;merchant:string;paymentMethod:string;confidence:number;products:ReceiptProduct[];productsTotalCents:number;productsConsistent:boolean};
 const excluded=/\b(total|troco|desconto|imposto|tributo|pagamento|valor\s+pago|subtotal)\b/i;
 const amount=(value:string)=>value.replace(/[^\d,.-]/g,'').replace(/([,.])-$/,'$1');
@@ -70,7 +70,7 @@ export function analysisFromAI(raw:any):ReceiptAnalysis{
  const products=list.flatMap((item:any,index:number)=>{
   const name=typeof item?.name==='string'?item.name.trim():'',quantity=Number(item?.quantity),unit=String(item?.unit??'').toLowerCase();
   if(!name||!Number.isFinite(quantity)||quantity<=0||!['un','kg','l'].includes(unit))return [];
-  try{const total_cents=cents(String(item.total??'')),unit_cents=item.unitPrice?cents(String(item.unitPrice)):undefined,category=receiptCategories.includes(item.category)?item.category:'Outros';if(total_cents<=0)return [];return [{name,quantity,unit:unit as ReceiptProduct['unit'],total_cents,...(unit_cents?{unit_cents}:{category}),sourceKey:`ai:${index}`}];}catch{return [];}
+  try{const total_cents=cents(String(item.total??'')),unit_cents=item.unitPrice?cents(String(item.unitPrice)):undefined,category=receiptCategories.includes(item.category)?item.category:'Outros',brand=typeof item.brand==='string'?item.brand.trim():'';if(total_cents<=0)return [];return [{name,...(brand?{brand}:{}),quantity,unit:unit as ReceiptProduct['unit'],total_cents,category,...(unit_cents?{unit_cents}:{}),sourceKey:`ai:${index}`}];}catch{return [];}
  });
  const total=amount(String(raw?.total??'')),subtotal=amount(String(raw?.subtotal??'')),discount=amount(String(raw?.discount??'')),check=receiptReconciliation(products,total,subtotal,discount);
  return {text:'Análise feita por IA. Revise os itens antes de confirmar.',total,subtotal,discount,date:/^\d{4}-\d{2}-\d{2}$/.test(String(raw?.date??''))?raw.date:'',merchant:typeof raw?.merchant==='string'?raw.merchant.trim():'',paymentMethod:typeof raw?.paymentMethod==='string'?raw.paymentMethod.trim():'',confidence:100,products,productsTotalCents:check.actual,productsConsistent:check.consistent};
