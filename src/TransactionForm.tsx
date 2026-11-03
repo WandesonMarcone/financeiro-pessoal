@@ -15,6 +15,7 @@ export function TransactionForm({ snapshot, userId, initial = {}, onSave, onClos
   const [method, setMethod] = useState(initial.card_id ? 'card' : initial.account_id ? 'account' : 'untracked');
   const [cardId, setCardId] = useState(String(initial.card_id ?? ''));
   const [installments, setInstallments] = useState(Number(initial.installments ?? 1) > 1);
+  const [fuel, setFuel] = useState(Boolean(initial.fuel_liters));
   const [advanced, setAdvanced] = useState(Boolean(initial.kind && initial.kind !== 'expense'));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -50,6 +51,16 @@ export function TransactionForm({ snapshot, userId, initial = {}, onSave, onClos
 
       if (kind === 'card_payment') data.due_on = f.get('due_on');
       if (initial.due_item_id) data.due_item_id = initial.due_item_id;
+      if (fuel) {
+        const liters=Number(String(f.get('fuel_liters')??'').replace(',','.'));
+        if (!Number.isFinite(liters)||liters<=0) throw new Error('Informe a quantidade de litros abastecida.');
+        data.fuel_liters=liters;
+        data.fuel_unit_cents=cents(String(f.get('fuel_unit_price')??''));
+        data.fuel_station=String(f.get('fuel_station')??'').trim();
+        const odometer=String(f.get('fuel_odometer')??'').trim();
+        if(odometer){if(!/^\d+$/.test(odometer))throw new Error('A quilometragem deve conter apenas números.');data.fuel_odometer=Number(odometer);}
+        data.category='Combustível';
+      }
 
       await onSave(data, operationId.current);
       onClose();
@@ -107,6 +118,8 @@ export function TransactionForm({ snapshot, userId, initial = {}, onSave, onClos
           {['expense', 'income'].includes(kind) && <label>Estabelecimento (opcional)<input name="merchant" placeholder="Ex.: Supermercado BH" defaultValue={initial.merchant ?? ''} /></label>}
           <label>Data<input name="occurred_on" type="date" required defaultValue={initial.occurred_on ?? today()} /></label>
           {kind === 'card_payment' && <label>Vencimento da fatura<input name="due_on" type="date" required defaultValue={initial.due_on ?? ''} /></label>}
+          {kind==='expense'&&<label className="check"><input type="checkbox" checked={fuel} onChange={event=>setFuel(event.target.checked)}/>Registrar abastecimento</label>}
+          {kind==='expense'&&fuel&&<><label>Litros abastecidos<input name="fuel_liters" required inputMode="decimal" placeholder="Ex.: 32,45" defaultValue={initial.fuel_liters??''}/></label><label>Preço por litro (R$)<CurrencyInput name="fuel_unit_price" required defaultValue={initial.fuel_unit_cents?(Number(initial.fuel_unit_cents)/100).toFixed(2).replace('.',','):''}/></label><label>Posto (opcional)<input name="fuel_station" defaultValue={initial.fuel_station??''}/></label><label>Quilometragem (opcional)<input name="fuel_odometer" inputMode="numeric" defaultValue={initial.fuel_odometer??''}/></label><p className="small">O valor deve conferir com litros × preço por litro, com tolerância de um centavo. O abastecimento continua sendo uma única despesa.</p></>}
         </div>
       </details>
 
