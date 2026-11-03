@@ -34,4 +34,13 @@ describe('sugestões da nota fiscal',()=>{
   const products=parseReceiptProducts('001 ARROZ\n1 UN x 10,00 10,00\n002 FEIJAO\n1 UN x 5,00 5,00');
   expect(receiptReconciliation(products,'13,00','15,00','2,00')).toEqual({actual:1500,expected:1300,consistent:true});
  });
+ it('recupera itens de cupom Leal com centavo final cortado pelo OCR',()=>{
+  const products=parseReceiptProducts('001 7898241710153 Ovos Decs Branco Gra 1 Un 9,99 9,5;\n002 0000000034258 Pao Frances Leal Kg 0,280 Kg 16,89 4,72\n003 0000000002172 Manga Kg 1,285 Kg 4,69 6,02');
+  expect(products).toEqual([
+   {name:'Ovos Decs Branco Gra',quantity:1,unit:'un',unit_cents:999,total_cents:999,sourceKey:'item:001'},
+   {name:'Pao Frances Leal Kg',quantity:.28,unit:'kg',unit_cents:1689,total_cents:472,sourceKey:'item:002'},
+   {name:'Manga Kg',quantity:1.285,unit:'kg',unit_cents:469,total_cents:602,sourceKey:'item:003'}
+  ]);
+  expect(receiptReconciliation(products,'20,73')).toEqual({actual:2073,expected:2073,consistent:true});
+ });
 });
