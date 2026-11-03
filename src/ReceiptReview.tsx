@@ -21,7 +21,7 @@ export function ReceiptReview({products,expectedTotalCents,document,merchant,dat
  }
  return <section className="panel" aria-label="Revisão dos produtos"><h2>Compra identificada</h2>
   <p className="small">Os produtos abaixo só são liberados porque a soma confere com o total da nota: {money(expectedTotalCents)}.</p>
-  {drafts.map(row=><p key={row.key}>{row.saved?'✓ ':''}<strong>{row.name}</strong> · {row.quantity} {row.unit} · {money(row.total_cents)}</p>)}
+  {drafts.map(row=><p key={row.key}>{row.saved?'✓ ':''}<strong>{row.name}</strong> · {row.quantity} {row.unit} · {money(row.unit_cents??Math.round(row.total_cents/row.quantity))}/{row.unit} · total {money(row.total_cents)}</p>)}
   {error&&<p role="alert" className="error">{error}</p>}{notice&&<p role="status">{notice}</p>}
   <button disabled={busy||!document||!drafts.some(row=>!row.saved)} onClick={()=>void confirm()}>{busy?'Salvando…':`Confirmar todos os ${drafts.length} produtos`}</button>
   {!document&&<p className="small">Primeiro toque em “Guardar documento”; depois confirme toda a compra.</p>}
