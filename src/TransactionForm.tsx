@@ -15,13 +15,25 @@ export function TransactionForm({ snapshot, userId, initial = {}, onSave, onClos
   const [method, setMethod] = useState(initial.card_id ? 'card' : initial.account_id ? 'account' : 'untracked');
   const [cardId, setCardId] = useState(String(initial.card_id ?? ''));
   const [installments, setInstallments] = useState(Number(initial.installments ?? 1) > 1);
-  const [fuel, setFuel] = useState(Boolean(initial.fuel_liters));
+  const [category, setCategory] = useState(String(initial.category ?? ''));
   const [advanced, setAdvanced] = useState(Boolean(initial.kind && initial.kind !== 'expense'));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   const accounts = active(snapshot, 'accounts').filter(account => account.owner_user_id === userId);
   const cards = active(snapshot, 'cards').filter(card => card.owner_user_id === userId);
+  const expenseCategories=[...new Set(['Alimentação','Lanche','Higiene pessoal','Limpeza','Combustível','Moradia','Transporte','Saúde','Lazer','Educação','Outros',...active(snapshot,'categories').map(item=>String(item.name))])];
+  const fuel=kind==='expense'&&category==='Combustível';
+  const descriptionHints:Record<string,string>={
+    'Alimentação':'Ex.: Compra no Supermercado BH',
+    'Lanche':'Ex.: Lanche no trabalho',
+    'Higiene pessoal':'Ex.: Farmácia / higiene pessoal',
+    'Limpeza':'Ex.: Produtos de limpeza',
+    'Combustível':'Ex.: Gasolina comum',
+    'Moradia':'Ex.: Condomínio',
+    'Transporte':'Ex.: Uber ou manutenção',
+    'Saúde':'Ex.: Consulta ou medicamento'
+  };
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -36,7 +48,7 @@ export function TransactionForm({ snapshot, userId, initial = {}, onSave, onClos
         amount_cents: cents(String(f.get('amount'))),
         occurred_on: String(f.get('occurred_on') || initial.occurred_on || today()),
         scope: kind === 'expense' ? 'family' : 'personal',
-        category: f.get('category') || 'Outros',
+        category: kind === 'expense' ? category : f.get('category') || 'Outros',
         merchant: f.get('merchant') || '',
       };
 
@@ -59,7 +71,6 @@ export function TransactionForm({ snapshot, userId, initial = {}, onSave, onClos
         data.fuel_station=String(f.get('fuel_station')??'').trim();
         const odometer=String(f.get('fuel_odometer')??'').trim();
         if(odometer){if(!/^\d+$/.test(odometer))throw new Error('A quilometragem deve conter apenas números.');data.fuel_odometer=Number(odometer);}
-        data.category='Combustível';
       }
 
       await onSave(data, operationId.current);
@@ -87,7 +98,10 @@ export function TransactionForm({ snapshot, userId, initial = {}, onSave, onClos
     <form onSubmit={submit} className="grid-form">
       {advanced && !initial.due_item_id && <label>Tipo<select value={kind} onChange={e => setKind(e.target.value)}><option value="expense">Despesa / compra</option><option value="income">Receita</option><option value="transfer">Transferência</option><option value="card_payment">Pagamento de fatura</option></select></label>}
 
-      <label>Descrição<input name="description" required maxLength={250} placeholder="Ex.: Compra no mercado" defaultValue={initial.description ?? ''} /></label>
+      {kind==='expense'&&<fieldset className="quick-methods"><legend>1. Qual é este gasto?</legend><select name="category" required value={category} onChange={event=>setCategory(event.target.value)}><option value="">Escolha a categoria</option>{expenseCategories.map(item=><option key={item} value={item}>{item}</option>)}</select>{category&&<p className="small">{fuel?'Informe os dados do abastecimento; o valor será conferido automaticamente.':`Você está registrando: ${category}.`}</p>}</fieldset>}
+      {kind==='expense'&&['Alimentação','Lanche','Higiene pessoal','Limpeza','Saúde'].includes(category)&&<label>{category==='Saúde'?'Clínica, farmácia ou profissional (opcional)':'Onde foi a compra? (opcional)'}<input name="merchant" placeholder={category==='Saúde'?'Ex.: Clínica ou farmácia':'Ex.: Supermercado BH'} defaultValue={initial.merchant ?? ''}/></label>}
+      {fuel&&<><label>Litros abastecidos<input name="fuel_liters" required inputMode="decimal" placeholder="Ex.: 32,45" defaultValue={initial.fuel_liters??''}/></label><label>Preço por litro (R$)<CurrencyInput name="fuel_unit_price" required defaultValue={initial.fuel_unit_cents?(Number(initial.fuel_unit_cents)/100).toFixed(2).replace('.',','):''}/></label><label>Posto (opcional)<input name="fuel_station" placeholder="Ex.: Posto X" defaultValue={initial.fuel_station??''}/></label><label>Quilometragem (opcional)<input name="fuel_odometer" inputMode="numeric" defaultValue={initial.fuel_odometer??''}/></label><p className="small">Litros × preço por litro precisam conferir com o valor total. O abastecimento continua sendo uma única despesa.</p></>}
+      <label>{category==='Moradia'?'Qual conta ou despesa?':'Descrição'}<input name="description" required maxLength={250} placeholder={descriptionHints[category]??'Ex.: Compra no mercado'} defaultValue={initial.description ?? ''} /></label>
       <label>Valor (R$)<CurrencyInput aria-label="Valor (R$)" name="amount" required defaultValue={initial.amount_cents ? (initial.amount_cents / 100).toFixed(2) : ''} /><small>Digite só os números: 1000 vira R$ 10,00.</small></label>
 
       {kind === 'expense' && <fieldset className="quick-methods">
@@ -114,12 +128,10 @@ export function TransactionForm({ snapshot, userId, initial = {}, onSave, onClos
       <details className="quick-details" open={advanced || Boolean(initial.due_item_id)}>
         <summary>Mais detalhes (opcional)</summary>
         <div className="grid-form quick-details-grid">
-          {['expense', 'income'].includes(kind) && <label>Categoria<input name="category" list="categories" defaultValue={initial.category ?? (simple ? 'Outros' : 'Outros')} /><datalist id="categories">{[...new Set(['Alimentação', 'Lanche', 'Moradia', 'Transporte', 'Saúde', 'Lazer', 'Salário', 'Outros', ...active(snapshot, 'categories').map(category => category.name)])].map(category => <option key={category} value={category} />)}</datalist></label>}
-          {['expense', 'income'].includes(kind) && <label>Estabelecimento (opcional)<input name="merchant" placeholder="Ex.: Supermercado BH" defaultValue={initial.merchant ?? ''} /></label>}
+          {kind==='income' && <label>Categoria<input name="category" list="categories" defaultValue={initial.category ?? 'Salário'} /><datalist id="categories">{[...new Set(['Salário','Outros',...active(snapshot, 'categories').map(category => category.name)])].map(item => <option key={item} value={item} />)}</datalist></label>}
+          {kind==='income' && <label>Origem (opcional)<input name="merchant" placeholder="Ex.: Exército Brasileiro" defaultValue={initial.merchant ?? ''} /></label>}
           <label>Data<input name="occurred_on" type="date" required defaultValue={initial.occurred_on ?? today()} /></label>
           {kind === 'card_payment' && <label>Vencimento da fatura<input name="due_on" type="date" required defaultValue={initial.due_on ?? ''} /></label>}
-          {kind==='expense'&&<label className="check"><input type="checkbox" checked={fuel} onChange={event=>setFuel(event.target.checked)}/>Registrar abastecimento</label>}
-          {kind==='expense'&&fuel&&<><label>Litros abastecidos<input name="fuel_liters" required inputMode="decimal" placeholder="Ex.: 32,45" defaultValue={initial.fuel_liters??''}/></label><label>Preço por litro (R$)<CurrencyInput name="fuel_unit_price" required defaultValue={initial.fuel_unit_cents?(Number(initial.fuel_unit_cents)/100).toFixed(2).replace('.',','):''}/></label><label>Posto (opcional)<input name="fuel_station" defaultValue={initial.fuel_station??''}/></label><label>Quilometragem (opcional)<input name="fuel_odometer" inputMode="numeric" defaultValue={initial.fuel_odometer??''}/></label><p className="small">O valor deve conferir com litros × preço por litro, com tolerância de um centavo. O abastecimento continua sendo uma única despesa.</p></>}
         </div>
       </details>
 
