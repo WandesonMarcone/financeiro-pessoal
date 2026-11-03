@@ -9,7 +9,7 @@ function CardChoice({ card, selected, onSelect }: { card: any; selected: boolean
   </button>;
 }
 
-export function TransactionForm({ snapshot, userId, initial = {}, onSave, onClose, simple = false }: { snapshot: Snapshot; userId: string; initial?: any; onSave: (payload: any, id?: string) => Promise<void>; onClose: () => void; simple?: boolean }) {
+export function TransactionForm({ snapshot, userId, initial = {}, onSave, onClose, onAttachReceipt, simple = false }: { snapshot: Snapshot; userId: string; initial?: any; onSave: (payload: any, id?: string) => Promise<void>; onClose: () => void; onAttachReceipt?:()=>void; simple?: boolean }) {
   const operationId = useRef(crypto.randomUUID());
   const [kind, setKind] = useState(initial.kind ?? 'expense');
   const [method, setMethod] = useState(initial.card_id ? 'card' : initial.account_id ? 'account' : 'untracked');
@@ -113,6 +113,7 @@ export function TransactionForm({ snapshot, userId, initial = {}, onSave, onClos
       <p className="small">O lançamento é compartilhado com a família. Aqui aparecem somente os seus cartões e contas.</p>
       {error && <p role="alert" className="error">{error}</p>}
       <button disabled={busy}>{busy ? 'Registrando…' : 'Salvar compra'}</button>
+      {kind==='expense'&&!initial.due_item_id&&onAttachReceipt&&<button type="button" className="quiet" onClick={onAttachReceipt}>📷 Ler cupom ou foto da compra</button>}
       {!advanced && !initial.due_item_id && <button type="button" className="quiet" onClick={() => setAdvanced(true)}>Receita, transferência ou pagamento de fatura</button>}
     </form>
   </section>;
