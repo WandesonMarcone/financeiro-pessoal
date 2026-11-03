@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {mergeReceiptProducts,parseReceiptProducts,productsMatchReceiptTotal,receiptReconciliation} from '../src/receipts';
+import {analysisFromAI,mergeReceiptProducts,parseReceiptProducts,productsMatchReceiptTotal,receiptReconciliation} from '../src/receipts';
 
 describe('sugestões da nota fiscal',()=>{
  it('extrai linhas explícitas e normaliza unidades pequenas',()=>{
@@ -42,5 +42,9 @@ describe('sugestões da nota fiscal',()=>{
    {name:'Manga Kg',quantity:1.285,unit:'kg',unit_cents:469,total_cents:602,sourceKey:'item:003'}
   ]);
   expect(receiptReconciliation(products,'20,73')).toEqual({actual:2073,expected:2073,consistent:true});
+ });
+ it('preserva a marca separada do produto na análise por IA',()=>{
+  const analysis=analysisFromAI({merchant:'Assaí',date:'2026-11-03',paymentMethod:'Cartão',subtotal:'11,90',discount:'',total:'11,90',products:[{name:'Leite integral 1L',brand:'Itambé',quantity:1,unit:'un',unitPrice:'11,90',total:'11,90',category:'Alimentação'}]});
+  expect(analysis.products).toEqual([{name:'Leite integral 1L',brand:'Itambé',quantity:1,unit:'un',unit_cents:1190,total_cents:1190,category:'Alimentação',sourceKey:'ai:0'}]);
  });
 });
