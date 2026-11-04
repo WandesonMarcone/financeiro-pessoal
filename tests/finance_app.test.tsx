@@ -1,7 +1,7 @@
 import {render,screen,waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {describe,expect,it,vi} from 'vitest';
-import {FinanceApp} from '../src/FinanceApp';
+import {FinanceApp,purchaseFilename} from '../src/FinanceApp';
 import {emptySnapshot} from '../src/domain';
 import type {FinanceAPI} from '../src/finance';
 
@@ -16,6 +16,10 @@ function api():FinanceAPI{return {
 };}
 
 describe('aplicativo financeiro',()=>{
+ it('padroniza o arquivo salvo com compra, estabelecimento e data',()=>{
+  const file=new File(['nota'],'WhatsApp Image 2026-11-03 at 23.00.00.jpeg',{type:'image/jpeg'});
+  expect(purchaseFilename(file,'Supermercados Leal Ltda','2026-11-03')).toBe('compra-supermercados-leal-ltda-2026-11-03.jpeg');
+ });
  it('carrega os módulos reais e registra despesa pela fila idempotente',async()=>{
   Object.defineProperty(navigator,'onLine',{configurable:true,value:true});
   const finance=api(),user=userEvent.setup();
