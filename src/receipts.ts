@@ -10,12 +10,15 @@ function receiptProduct(name:string,quantityText:string,unitText:string,unitText
  const normalizedUnit:ReceiptProduct['unit']=unit.startsWith('k')||unit==='g'?'kg':unit==='l'||unit==='lt'||unit==='ml'?'l':'un';
  if(!(normalized>0)||!totalText)return;
  try{
-  const unit_cents=unitTextPrice?cents(amount(unitTextPrice)):undefined;
+  const printedUnitCents=unitTextPrice?cents(amount(unitTextPrice)):undefined;
   let total_cents=cents(amount(totalText));
-  const calculated=unit_cents===undefined?undefined:Math.round(normalized*unit_cents);
+  const calculated=printedUnitCents===undefined?undefined:Math.round(normalized*printedUnitCents);
   // A impressão fiscal sempre tem dois centavos. Se o OCR leu só um deles,
   // a conta quantidade × preço é mais confiável que inventar outro valor.
   if(calculated!==undefined&&Math.abs(calculated-total_cents)>2){if(decimals(totalText)<2)total_cents=calculated;else return;}
+  // Alguns PDFs fiscais não mostram o valor unitário. Para peso/volume,
+  // guardamos a divisão do total pela quantidade para comparação futura.
+  const unit_cents=printedUnitCents??((normalizedUnit==='kg'||normalizedUnit==='l')?Math.round(total_cents/normalized):undefined);
   return {name:name.trim(),quantity:normalized,unit:normalizedUnit,total_cents,...(unit_cents===undefined?{}:{unit_cents}),...(sourceKey?{sourceKey}:{})};
  }catch{return;}
 }
