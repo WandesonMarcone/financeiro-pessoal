@@ -44,7 +44,7 @@ describe('sugestões da nota fiscal',()=>{
   expect(receiptReconciliation(products,'20,73')).toEqual({actual:2073,expected:2073,consistent:true});
  });
  it('recupera itens do PDF digital do portal NFC-e',()=>{
-  const pdf='SUPERMERCADOS LEAL LTDA\nOvos Decs Branco Gra (Código: 386302)\nQtde total de ítens:\n1.0000\nUN:\nUN\nValor total R$:\nR$\n9,99\nPao Frances Leal Kg (Código: 34258)\nQtde total de ítens:\n0.2800\nUN: KG\nValor total R$:\nR$\n4,72\nManga Kg (Código: 2172)\nQtde total de ítens:\n1.2850\nUN: KG\nValor total R$:\nR$\n6,02\nQtde total de ítens\nValor total R$\n3\n20.73';
+  const pdf='SUPERMERCADOS LEAL LTDA\nOvos Decs Branco Gra (Código:\n386302)\nQtde total de ítens:\n1.0000\nUN:\nUN\nValor total R$: R$\n9,99\nPao Frances Leal Kg (Código: 34258)\n \nQtde total de ítens:\n0.2800\n \nUN: KG \nValor total R$: R$\n4,72\nManga Kg (Código: 2172)\n \nQtde total de ítens:\n1.2850\n \nUN: KG \nValor total R$: R$\n6,02\nQtde total de ítens\n \n3\nValor total R$\n \n20.73';
   const analysis=analyzeReceiptText(pdf);
   expect(analysis.products).toHaveLength(3);
   expect(analysis.products.map(item=>item.total_cents)).toEqual([999,472,602]);
