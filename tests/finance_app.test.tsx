@@ -25,7 +25,7 @@ describe('aplicativo financeiro',()=>{
   const finance=api(),user=userEvent.setup();
   render(<FinanceApp api={finance} access={{kind:'ready',userId:'user-a',householdId:'house-a',householdName:'Família teste',displayName:'Pessoa A'}} profile={<p>Perfil</p>}/>);
   expect(await screen.findByText('Saldo das minhas contas')).toBeInTheDocument();
-  await user.click(screen.getByRole('checkbox',{name:'Modo simples'}));
+   expect(screen.queryByRole('checkbox',{name:'Modo simples'})).not.toBeInTheDocument();
   expect(screen.getByRole('button',{name:'Contas'})).toBeInTheDocument();
   await user.click(screen.getByRole('button',{name:'+ Registrar gasto'}));
   await user.selectOptions(screen.getByRole('combobox',{name:'Grupo principal'}),'Alimentação');
