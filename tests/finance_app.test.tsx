@@ -28,15 +28,25 @@ describe('aplicativo financeiro',()=>{
   await user.click(screen.getByRole('checkbox',{name:'Modo simples'}));
   expect(screen.getByRole('button',{name:'Contas'})).toBeInTheDocument();
   await user.click(screen.getByRole('button',{name:'+ Registrar gasto'}));
-  await user.selectOptions(screen.getByRole('combobox',{name:''}),'Alimentação');
+  await user.selectOptions(screen.getByRole('combobox',{name:'Grupo principal'}),'Alimentação');
+  await user.selectOptions(screen.getByRole('combobox',{name:'Tipo de gasto'}),'Mercado');
   await user.type(screen.getByLabelText('Descrição'),'Mercado');
   await user.type(screen.getByLabelText('Valor (R$)'),'1234');
   expect(screen.getByLabelText('Valor (R$)')).toHaveValue('R$ 12,34');
   await user.click(screen.getByRole('button',{name:'Salvar compra'}));
   await waitFor(()=>expect(finance.post).toHaveBeenCalledTimes(1));
   expect(finance.post).toHaveBeenCalledWith(expect.any(String),expect.objectContaining({
-   household_id:'house-a',kind:'expense',scope:'family',description:'Mercado',amount_cents:1234
+   household_id:'house-a',kind:'expense',scope:'family',category:'Alimentação',subcategory:'Mercado',description:'Mercado',amount_cents:1234
   }));
+ });
+ it('organiza gasolina dentro de transporte e abre os campos do abastecimento',async()=>{
+  const finance=api(),user=userEvent.setup();
+  render(<FinanceApp api={finance} access={{kind:'ready',userId:'user-a',householdId:'house-a',householdName:'Família teste',displayName:'Pessoa A'}} profile={<p>Perfil</p>}/>);
+  await user.click(await screen.findByRole('button',{name:'+ Registrar gasto'}));
+  await user.selectOptions(screen.getByRole('combobox',{name:'Grupo principal'}),'Transporte');
+  await user.selectOptions(screen.getByRole('combobox',{name:'Tipo de gasto'}),'Gasolina');
+  expect(screen.getByLabelText('Litros abastecidos')).toBeInTheDocument();
+  expect(screen.getByLabelText('Preço por litro (R$)')).toBeInTheDocument();
  });
  it('mantém o cupom como rascunho e não oferece leitura de QR Code',async()=>{
   const finance=api(),user=userEvent.setup();
