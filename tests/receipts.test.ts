@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {analysisFromAI,mergeReceiptProducts,parseReceiptProducts,productsMatchReceiptTotal,receiptReconciliation} from '../src/receipts';
+import {analysisFromAI,analyzeReceiptText,mergeReceiptProducts,parseReceiptProducts,productsMatchReceiptTotal,receiptReconciliation} from '../src/receipts';
 
 describe('sugestões da nota fiscal',()=>{
  it('extrai linhas explícitas e normaliza unidades pequenas',()=>{
@@ -42,6 +42,13 @@ describe('sugestões da nota fiscal',()=>{
    {name:'Manga Kg',quantity:1.285,unit:'kg',unit_cents:469,total_cents:602,sourceKey:'item:003'}
   ]);
   expect(receiptReconciliation(products,'20,73')).toEqual({actual:2073,expected:2073,consistent:true});
+ });
+ it('recupera itens do PDF digital do portal NFC-e',()=>{
+  const pdf='SUPERMERCADOS LEAL LTDA\nOvos Decs Branco Gra (Código: 386302)\nQtde total de ítens:\n1.0000\nUN:\nUN\nValor total R$:\nR$\n9,99\nPao Frances Leal Kg (Código: 34258)\nQtde total de ítens:\n0.2800\nUN: KG\nValor total R$:\nR$\n4,72\nManga Kg (Código: 2172)\nQtde total de ítens:\n1.2850\nUN: KG\nValor total R$:\nR$\n6,02\nQtde total de ítens\nValor total R$\n3\n20.73';
+  const analysis=analyzeReceiptText(pdf);
+  expect(analysis.products).toHaveLength(3);
+  expect(analysis.products.map(item=>item.total_cents)).toEqual([999,472,602]);
+  expect(analysis.productsConsistent).toBe(true);
  });
  it('preserva a marca separada do produto na análise por IA',()=>{
   const analysis=analysisFromAI({merchant:'Assaí',date:'2026-11-03',paymentMethod:'Cartão',subtotal:'11,90',discount:'',total:'11,90',products:[{name:'Leite integral 1L',brand:'Itambé',quantity:1,unit:'un',unitPrice:'11,90',total:'11,90',category:'Alimentação'}]});
