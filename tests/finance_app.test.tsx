@@ -38,4 +38,13 @@ describe('aplicativo financeiro',()=>{
    household_id:'house-a',kind:'expense',scope:'family',description:'Mercado',amount_cents:1234
   }));
  });
+ it('mantém o cupom como rascunho e não oferece leitura de QR Code',async()=>{
+  const finance=api(),user=userEvent.setup();
+  render(<FinanceApp api={finance} access={{kind:'ready',userId:'user-a',householdId:'house-a',householdName:'Família teste',displayName:'Pessoa A'}} profile={<p>Perfil</p>}/>);
+  await user.click(await screen.findByRole('button',{name:'Notas e documentos'}));
+  expect(screen.getByText('Ler cupom de compra')).toBeInTheDocument();
+  expect(screen.getByText(/somente neste aparelho até você revisar/i)).toBeInTheDocument();
+  expect(screen.queryByRole('button',{name:/ler qr code/i})).not.toBeInTheDocument();
+  expect(screen.queryByRole('button',{name:/só guardar arquivo/i})).not.toBeInTheDocument();
+ });
 });
