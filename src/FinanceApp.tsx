@@ -44,7 +44,7 @@ const help:Record<string,{title:string;steps:string[];note:string}>={
 function Help({page}:{page:string}){const item=help[page]??{title:'Como usar esta tela',steps:['Use Adicionar para criar um registro.','Toque em Editar para corrigir dados.','Arquivar preserva o histórico sem apagar informações.'],note:'Tudo é sincronizado quando houver conexão.'};return <details className="help-guide"><summary>❔ Ajuda</summary><h2>{item.title}</h2><ol>{item.steps.map(step=><li key={step}>{step}</li>)}</ol><p>{item.note}</p></details>}
 export function FinanceApp({api,access,profile}:{api:FinanceAPI;access:Ready;profile:ReactNode|((navigate:(page:string)=>void,hasPayroll:boolean)=>ReactNode)}){
  const [data,setData]=useState<Snapshot>(emptySnapshot),[loading,setLoading]=useState(true),[page,setPage]=useState('dashboard'),[error,setError]=useState(''),[notice,setNotice]=useState('');
- const [simple,setSimple]=useState(()=>localStorage.getItem('simple:'+access.userId)!=='false');
+
  const [offline,setOffline]=useState(!navigator.onLine),[pending,setPending]=useState<Pending[]>([]);
  const [editor,setEditor]=useState<{table:string;row?:Row;fields?:Field[];extra?:any}|null>(null),[transaction,setTransaction]=useState<any>(null),[purchaseDetails,setPurchaseDetails]=useState<Row|null>(null);
  const [month,setMonth]=useState(today().slice(0,7)),[search,setSearch]=useState('');
@@ -93,7 +93,7 @@ export function FinanceApp({api,access,profile}:{api:FinanceAPI;access:Ready;pro
  async function archive(table:string,row:Row){if(!confirm('Arquivar este registro? Ele continuará preservado no histórico.'))return;await save(table,{archived:true},row);}
  const personalPages=new Set(['cards','payroll_profiles','payroll_statements','commitments']);
  const filtered=active(data,page).filter(r=>(!personalPages.has(page)||own(r))&&(!search||String(r.name??r.description??r.product_key??r.filename??'').toLowerCase().includes(search.toLowerCase())));
- const nav=simple?['dashboard','transactions','shopping_items','documents','profile']:['dashboard','transactions','accounts','shopping_items','documents','budgets','goals','profile'];
+ const nav=['dashboard','transactions','accounts','shopping_items','documents','budgets','goals','profile'];
  return <div className="workspace">
  <div className="workspace-top"><div><p className="eyebrow">{access.householdName}</p><h1>{labels[page]}</h1></div></div>
  <div className="toolbar"><span className="badge">{offline?'Offline · dados deste aparelho':'Conectado'}</span><button className="quiet" onClick={()=>{setEditor(null);setTransaction(null);setPage('sync');}}>Fila: {pending.length}</button><button className="quiet" onClick={()=>void load()}>Atualizar</button></div>
