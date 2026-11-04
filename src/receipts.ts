@@ -88,7 +88,7 @@ function portalNfceProducts(text:string):ReceiptProduct[]{
  // imagem, mas o portal distribui cada coluna em linhas diferentes. Esta
  // leitura conserva quantidade e total exatamente como constam no documento.
  const products:ReceiptProduct[]=[];
- const rows=[...text.matchAll(/([^\n]+?)\s*\(C[óo]digo:\s*\d+\)\s*\n\s*Qtde total de [íi]tens:\s*\n\s*([\d.,]+)\s*\n\s*UN:\s*([^\n]*)\n(?:\s*(UN|UND|KG|G|L|LT|ML)\s*\n)?\s*Valor total R\$:\s*R\$\s*\n\s*([\d.,]+)/gi)];
+ const rows=[...text.matchAll(/([^\n]+?)\s*\(C[óo]digo:\s*\n?\s*\d+\)\s*\n\s*Qtde total de [íi]tens:\s*\n\s*([\d.,]+)\s*\n\s*UN:\s*([^\n]*)\n(?:\s*(UN|UND|KG|G|L|LT|ML)\s*\n)?\s*Valor total R\$:\s*R\$\s*\n\s*([\d.,]+)/gi)];
  for(const [index,row] of rows.entries()){
   const name=row[1].trim(),quantity=row[2],unit=(row[4]?.trim()||row[3].trim()).toLowerCase(),total=row[5];
   if(!name||!quantity||!total)continue;
@@ -113,8 +113,9 @@ export async function recognize(file:File,progress:(text:string)=>void){
   const doc=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
   if(doc.numPages>20)throw Error('Use um PDF de até 20 páginas.');
   try{for(let i=1;i<=doc.numPages;i++){progress('Lendo texto do PDF: página '+i);const page=await doc.getPage(i);const content=await page.getTextContent();
-   const lines=new Map<number,Array<{x:number;text:string}>>();for(const item of content.items as any[]){const y=Math.round(Number(item.transform?.[5]??0));const line=lines.get(y)??[];line.push({x:Number(item.transform?.[4]??0),text:item.str??''});lines.set(y,line);}
-   text+=[...lines.entries()].sort((a,b)=>b[0]-a[0]).map(([,line])=>line.sort((a,b)=>a.x-b.x).map(item=>item.text).join(' ').trim()).filter(Boolean).join('\n')+'\n';}
+   // A sequência original do PDF NFC-e preserva cada campo do item. Reordenar
+   // pelos eixos visuais mistura colunas (nome, quantidade e total) no celular.
+   text+=(content.items as any[]).map(item=>item.str??'').join('\n')+'\n';}
   if(!text.trim())throw Error('Este PDF contém apenas imagens. Envie a foto da nota para usar OCR.');}finally{doc.cleanup();}
  }else{
  const {createWorker,PSM}=await import('tesseract.js');
