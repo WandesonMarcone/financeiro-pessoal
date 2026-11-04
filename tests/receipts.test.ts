@@ -5,8 +5,8 @@ describe('sugestões da nota fiscal',()=>{
  it('extrai linhas explícitas e normaliza unidades pequenas',()=>{
   expect(parseReceiptProducts('ARROZ BRANCO 2 UN 17,90\nCAFE 500 G 12,45\nLEITE 500 ML 3,99')).toEqual([
    {name:'ARROZ BRANCO',quantity:2,unit:'un',total_cents:1790},
-   {name:'CAFE',quantity:.5,unit:'kg',total_cents:1245},
-   {name:'LEITE',quantity:.5,unit:'l',total_cents:399}
+   {name:'CAFE',quantity:.5,unit:'kg',total_cents:1245,unit_cents:2490},
+   {name:'LEITE',quantity:.5,unit:'l',total_cents:399,unit_cents:798}
   ]);
  });
  it('ignora totais e linhas incertas para revisão humana',()=>{
@@ -48,6 +48,7 @@ describe('sugestões da nota fiscal',()=>{
   const analysis=analyzeReceiptText(pdf);
   expect(analysis.products).toHaveLength(3);
   expect(analysis.products.map(item=>item.total_cents)).toEqual([999,472,602]);
+  expect(analysis.products.map(item=>item.unit_cents)).toEqual([undefined,1686,468]);
   expect(analysis.productsConsistent).toBe(true);
  });
  it('preserva a marca separada do produto na análise por IA',()=>{
