@@ -120,21 +120,34 @@ export async function readQR(file:File){
 }
 async function canvasFor(file:File,crop?:{x:number;y:number;width:number;height:number}){
  const image=await createImageBitmap(file),source=crop??{x:0,y:0,width:image.width,height:image.height};
- const scale=Math.min(2,Math.max(1,1800/source.width)),canvas=document.createElement('canvas');canvas.width=Math.round(source.width*scale);canvas.height=Math.round(source.height*scale);
+ // Nunca amplie fotos grandes em memória. Em celulares isso evitava múltiplos
+ // canvases de uma imagem de 12–48 MP durante OCR/QR e podia reiniciar a aba.
+ const scale=Math.min(2,1800/source.width),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(source.width*scale));canvas.height=Math.max(1,Math.round(source.height*scale));
  const context=canvas.getContext('2d',{willReadFrequently:true});if(!context)throw Error('Não foi possível preparar esta imagem.');
  context.drawImage(image,source.x,source.y,source.width,source.height,0,0,canvas.width,canvas.height);image.close();return {canvas,context};
 }
 async function qrCandidateUrls(file:File){
  const urls=[URL.createObjectURL(file)];
  if(!file.type.startsWith('image/')||typeof createImageBitmap==='undefined')return urls;
- try{const image=await createImageBitmap(file);
-  for(const angle of [0,90,180,270]){const swapped=angle===90||angle===270,width=swapped?image.height:image.width,height=swapped?image.width:image.height,canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const context=canvas.getContext('2d');if(!context)continue;
-   context.save();if(angle===90){context.translate(width,0);context.rotate(Math.PI/2);}if(angle===180){context.translate(width,height);context.rotate(Math.PI);}if(angle===270){context.translate(0,height);context.rotate(-Math.PI/2);}context.drawImage(image,0,0);context.restore();
+ try{const image=await createImageBitmap(file),baseScale=Math.min(1,1600/Math.max(image.width,image.height)),baseWidth=Math.max(1,Math.round(image.width*baseScale)),baseHeight=Math.max(1,Math.round(image.height*baseScale));
+  for(const angle of [0,90,180,270]){const swapped=angle===90||angle===270,width=swapped?baseHeight:baseWidth,height=swapped?baseWidth:baseHeight,canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const context=canvas.getContext('2d');if(!context)continue;
+   context.save();if(angle===90){context.translate(width,0);context.rotate(Math.PI/2);}if(angle===180){context.translate(width,height);context.rotate(Math.PI);}if(angle===270){context.translate(0,height);context.rotate(-Math.PI/2);}context.drawImage(image,0,0,baseWidth,baseHeight);context.restore();
    const full=await new Promise<Blob|null>(resolve=>canvas.toBlob(resolve,'image/png'));if(full)urls.push(URL.createObjectURL(full));
    const side=Math.min(width,height),crop=document.createElement('canvas');crop.width=side;crop.height=side;crop.getContext('2d')?.drawImage(canvas,(width-side)/2,(height-side)/2,side,side,0,0,side,side);const centered=await new Promise<Blob|null>(resolve=>crop.toBlob(resolve,'image/png'));if(centered)urls.push(URL.createObjectURL(centered));
   }image.close();
  }catch{/* a foto original ainda será tentada */}
  return urls;
+}
+export async function prepareImageForAI(file:File,progress:(text:string)=>void):Promise<File>{
+ if(!file.type.startsWith('image/')||file.size<=3_800_000)return file;
+ if(typeof createImageBitmap==='undefined')throw Error('Esta foto é grande demais para análise. Tire outra foto em resolução normal ou escolha “Só guardar arquivo”.');
+ progress('Reduzindo a foto para leitura segura…');
+ const image=await createImageBitmap(file),scale=Math.min(1,1800/Math.max(image.width,image.height)),width=Math.max(1,Math.round(image.width*scale)),height=Math.max(1,Math.round(image.height*scale)),canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+ const context=canvas.getContext('2d');if(!context){image.close();throw Error('Não foi possível preparar a foto para leitura.');}context.drawImage(image,0,0,width,height);image.close();
+ let quality=.86,blob:Blob|null=null;
+ while(quality>=.5){blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',quality));if(blob&&blob.size<=3_800_000)break;quality-=.12;}
+ if(!blob||blob.size>4*1024*1024)throw Error('A foto continua grande demais para a análise. Tire uma foto mais próxima somente do cupom.');
+ return new File([blob],file.name.replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg',lastModified:file.lastModified});
 }
 async function receiptImageVariants(file:File){
  if(!file.type.startsWith('image/')||typeof createImageBitmap==='undefined')return [file];
