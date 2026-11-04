@@ -20,7 +20,19 @@ Deno.serve(async(req)=>{
   const key=Deno.env.get('OPENAI_API_KEY');if(!key)return json({error:'A análise por IA ainda não está configurada.'},503);
   const prompt='Leia esta nota fiscal brasileira. Extraia somente o que estiver legível. Valores em reais com vírgula e duas casas. Produtos não podem ser repetidos: preserve uma linha por item fiscal, inclusive itens iguais em linhas diferentes. Para peso use kg; para unidade use un; para líquidos use l. Extraia a marca separadamente do nome do produto, quando ela estiver impressa; se não estiver legível, deixe brand vazia. Classifique cada item em uma das categorias fornecidas. Não complete dados incertos: use string vazia ou produtos vazios. O total deve ser o valor pago.';
   const response=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4.1-mini',max_output_tokens:1800,input:[{role:'user',content:[{type:'input_text',text:prompt},{type:'input_image',image_url:`data:${file.type};base64,${toBase64(new Uint8Array(await file.arrayBuffer()))}`,detail:'high'}]}],text:{format:{type:'json_schema',name:'receipt_analysis',strict:true,schema}}})});
-  if(!response.ok){console.error('OpenAI receipt analysis failed',response.status);return json({error:'Não foi possível analisar esta foto agora.'},502);}
+  if(!response.ok){
+   const failure=await response.json().catch(()=>null) as {error?:{code?:string;message?:string}}|null;
+   const code=failure?.error?.code;
+   console.error('OpenAI receipt analysis failed',response.status,code??'unknown');
+   if(response.status===429){
+    const error=code==='insufficient_quota'
+     ?'A chave da IA está sem créditos ou atingiu a cota da OpenAI. Verifique Billing e Usage da conta usada nesta chave; sua foto foi preservada e você pode tentar novamente depois.'
+     :'A IA recebeu muitas solicitações em pouco tempo. Aguarde um minuto e tente novamente; sua foto foi preservada.';
+    return json({error,code:'ai_limit'},429);
+   }
+   if(response.status===401||response.status===403)return json({error:'A configuração da IA foi recusada. Verifique a chave configurada no Supabase.'},503);
+   return json({error:'A IA não conseguiu analisar esta foto agora. Tente novamente em alguns minutos; sua foto foi preservada.'},502);
+  }
   const output=await response.json(),raw=output.output_text;if(typeof raw!=='string')return json({error:'A IA não retornou uma leitura utilizável.'},502);
   return json(JSON.parse(raw));
  }catch(error){console.error('Receipt analysis error',error instanceof Error?error.message:'unknown');return json({error:'Não foi possível analisar esta nota.'},500);}
