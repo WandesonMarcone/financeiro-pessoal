@@ -23,6 +23,15 @@ export function financeAPI(client:SupabaseClient<Database>){
  },
  async upload(id:string,file:File){const {error}=await db.storage.from('family-documents').upload(id,file,{upsert:false,contentType:file.type});if(error)throw Error(error.message);},
  async download(id:string){const {data,error}=await db.storage.from('family-documents').download(id);if(error)throw Error(error.message);return data;}
+ ,async analyzeReceiptWithAI(file:File){
+  if(!file.type.startsWith('image/'))throw Error('A análise por IA aceita foto JPEG, PNG ou WebP.');
+  if(file.size>4*1024*1024)throw Error('Para análise por IA, use uma foto de até 4 MB.');
+  const body=new FormData();body.append('receipt',file,file.name);
+  const {data,error}=await db.functions.invoke('analyze-receipt',{body});
+  if(error)throw Error(error.message);
+  if(!data||typeof data!=='object')throw Error('A IA não retornou uma análise válida.');
+  return data;
+ }
  ,async removeDocument(id:string,password:string){
   const {data:userData,error:userError}=await db.auth.getUser();if(userError||!userData.user?.email)throw Error('Não foi possível confirmar a conta atual. Entre novamente e tente.');
   const {error:authError}=await db.auth.signInWithPassword({email:userData.user.email,password});if(authError)throw Error('Senha atual incorreta. O documento não foi apagado.');
