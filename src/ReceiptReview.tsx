@@ -20,7 +20,7 @@ export function ReceiptReview({products,expectedTotalCents,document,merchant,dat
    await save('receipt_items',{document_id:readyTarget.id,scope:readyTarget.scope,product_key:row.name,brand:row.brand,quantity:row.quantity,unit:row.unit,total_cents:row.total_cents,unit_cents,category:row.category,subcategory:row.subcategory,product_group:row.productGroup,extraction_source:'ai',merchant,purchased_on:date||today()});
    existing.add(signature);setDrafts(rows=>rows.map(item=>item.key===row.key?{...item,saved:true}:item));count++;
   }
-   if(!purchaseSaved&&onCreatePurchase){const operationId=target.purchase_operation_id||crypto.randomUUID();if(!target.purchase_operation_id){await save('documents',{purchase_operation_id:operationId},target);target={...target,purchase_operation_id:operationId};}await onCreatePurchase(operationId);await save('documents',{purchase_confirmed_at:new Date().toISOString()},target);setPurchaseSaved(true);}
+   if(!purchaseSaved&&onCreatePurchase){const operationId=target.purchase_operation_id||crypto.randomUUID();if(!target.purchase_operation_id){await save('documents',{purchase_operation_id:operationId},target);target={...target,purchase_operation_id:operationId};}await onCreatePurchase(operationId);await save('documents',{purchase_confirmed_at:new Date().toISOString(),transaction_id:operationId},target);setPurchaseSaved(true);}
    setNotice((count?`${count} produto(s) e categorias registrados. `:'')+(purchaseSaved?'Compra já registrada.':'Compra total registrada em Lançamentos.'));}
   catch(e){setError(e instanceof Error?e.message:'Falha ao salvar produtos. Os itens restantes podem ser tentados novamente.');}
   finally{setBusy(false);}
