@@ -83,13 +83,27 @@ function merchantFrom(text:string){
  if(/sendas|assa[ií]/i.test(found))return 'Assaí';
  return found.trim();
 }
-function analyzeText(text:string,confidence:number){
- const total=[...text.matchAll(/(?:valor\s+(?:total|a\s+pagar)|total\s+r?\$?)\s*[:\s]*([\d.,;:]+)/gi)].at(-1)?.[1]??'';
+function portalNfceProducts(text:string):ReceiptProduct[]{
+ // PDF baixado diretamente do portal NFC-e: o texto é mais confiável que a
+ // imagem, mas o portal distribui cada coluna em linhas diferentes. Esta
+ // leitura conserva quantidade e total exatamente como constam no documento.
+ const products:ReceiptProduct[]=[];
+ const rows=[...text.matchAll(/([^\n]+?)\s*\(C[óo]digo:\s*\d+\)\s*\n\s*Qtde total de [íi]tens:\s*\n\s*([\d.,]+)\s*\n\s*UN:\s*([^\n]*)\n(?:\s*(UN|UND|KG|G|L|LT|ML)\s*\n)?\s*Valor total R\$:\s*R\$\s*\n\s*([\d.,]+)/gi)];
+ for(const [index,row] of rows.entries()){
+  const name=row[1].trim(),quantity=row[2],unit=(row[4]?.trim()||row[3].trim()).toLowerCase(),total=row[5];
+  if(!name||!quantity||!total)continue;
+  const product=receiptProduct(name,quantity,unit,undefined,total,`pdf:${index}`);if(product)products.push(product);
+ }
+ return products;
+}
+export function analyzeReceiptText(text:string,confidence=100){
+ const portalTotal=[...text.matchAll(/Qtde total de [íi]tens\s*\n\s*Valor total R\$\s*\n\s*\d+\s*\n\s*([\d.,]+)/gi)].at(-1)?.[1];
+ const total=portalTotal??[...text.matchAll(/(?:valor\s+(?:total|a\s+pagar)|total\s+r?\$?)\s*[:\s]*([\d.,;:]+)/gi)].at(-1)?.[1]??'';
  const subtotal=[...text.matchAll(/(?:sub\s*total)\s*(?:r\$)?\s*[:\s]*([\d.,;:]+)/gi)].at(-1)?.[1]??'';
  const discount=[...text.matchAll(/(?:desconto)\s*(?:r\$)?\s*[:\s-]*([\d.,;:]+)/gi)].at(-1)?.[1]??'';
  const date=text.match(/\b(\d{2})\/(\d{2})\/(\d{4})\b/),payment=text.match(/(?:forma\s+de\s+pagamento\s*\n?\s*|pagamento\s*[:\-]?\s*)([^\n]{3,60})/i);
- const products=parseReceiptProducts(text),check=receiptReconciliation(products,amount(total),amount(subtotal),amount(discount));
- return {text,total:amount(total),subtotal:amount(subtotal),discount:amount(discount),date:date?`${date[3]}-${date[2]}-${date[1]}`:'',merchant:merchantFrom(text),paymentMethod:payment?.[1].trim().replace(/\s+/g,' ')??'',confidence,products,productsTotalCents:check.actual,productsConsistent:check.consistent} satisfies ReceiptAnalysis;
+ const products=portalNfceProducts(text);const parsedProducts=products.length?products:parseReceiptProducts(text),check=receiptReconciliation(parsedProducts,amount(total),amount(subtotal),amount(discount));
+ return {text,total:amount(total),subtotal:amount(subtotal),discount:amount(discount),date:date?`${date[3]}-${date[2]}-${date[1]}`:'',merchant:merchantFrom(text),paymentMethod:payment?.[1].trim().replace(/\s+/g,' ')??'',confidence,products:parsedProducts,productsTotalCents:check.actual,productsConsistent:check.consistent} satisfies ReceiptAnalysis;
 }
 function analysisScore(result:ReceiptAnalysis){return (result.productsConsistent?10000:0)+result.products.length*100+Math.min(99,result.confidence);}
 export async function recognize(file:File,progress:(text:string)=>void){
@@ -98,18 +112,20 @@ export async function recognize(file:File,progress:(text:string)=>void){
   const pdfjs=await import('pdfjs-dist');const workerUrl=(await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;pdfjs.GlobalWorkerOptions.workerSrc=workerUrl;
   const doc=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
   if(doc.numPages>20)throw Error('Use um PDF de até 20 páginas.');
-  try{for(let i=1;i<=doc.numPages;i++){progress('Lendo página '+i);const page=await doc.getPage(i);const content=await page.getTextContent();text+=content.items.map((item:any)=>item.str??'').join(' ')+'\n';}
+  try{for(let i=1;i<=doc.numPages;i++){progress('Lendo texto do PDF: página '+i);const page=await doc.getPage(i);const content=await page.getTextContent();
+   const lines=new Map<number,Array<{x:number;text:string}>>();for(const item of content.items as any[]){const y=Math.round(Number(item.transform?.[5]??0));const line=lines.get(y)??[];line.push({x:Number(item.transform?.[4]??0),text:item.str??''});lines.set(y,line);}
+   text+=[...lines.entries()].sort((a,b)=>b[0]-a[0]).map(([,line])=>line.sort((a,b)=>a.x-b.x).map(item=>item.text).join(' ').trim()).filter(Boolean).join('\n')+'\n';}
   if(!text.trim())throw Error('Este PDF contém apenas imagens. Envie a foto da nota para usar OCR.');}finally{doc.cleanup();}
  }else{
  const {createWorker,PSM}=await import('tesseract.js');
  const base=import.meta.env.BASE_URL;
  const worker=await createWorker('por',1,{workerPath:`${base}tesseract/worker.min.js`,corePath:`${base}tesseract/tesseract-core-lstm.wasm.js`,langPath:`${base}tesseract`,logger:m=>progress(m.status==='recognizing text'?'Lendo nota: '+Math.round(m.progress*100)+'%':'Preparando leitura…')});
   try{await worker.setParameters({tessedit_pageseg_mode:PSM.SINGLE_BLOCK,preserve_interword_spaces:'1'});const variants=await receiptImageVariants(file);const results:ReceiptAnalysis[]=[];
-   for(let index=0;index<variants.length;index++){progress(`Lendo nota: tentativa ${index+1} de ${variants.length}`);const result=await worker.recognize(variants[index]);results.push(analyzeText(result.data.text,result.data.confidence));}
+   for(let index=0;index<variants.length;index++){progress(`Lendo nota: tentativa ${index+1} de ${variants.length}`);const result=await worker.recognize(variants[index]);results.push(analyzeReceiptText(result.data.text,result.data.confidence));}
    const best=results.sort((a,b)=>analysisScore(b)-analysisScore(a))[0];text=best.text;confidence=best.confidence;
   }finally{await worker.terminate();}
  }
- return analyzeText(text,confidence);
+ return analyzeReceiptText(text,confidence);
 }
 export async function readQR(file:File){
  const {BrowserQRCodeReader}=await import('@zxing/browser');const reader=new BrowserQRCodeReader(),candidates=await qrCandidateUrls(file);
