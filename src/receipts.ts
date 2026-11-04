@@ -1,10 +1,39 @@
 import {cents,productKey} from './domain';
 export const receiptCategories=['Alimentação','Bebidas','Higiene pessoal','Limpeza','Combustível','Lanche','Saúde','Outros'] as const;
-export type ReceiptProduct={name:string;brand?:string;quantity:number;unit:'un'|'kg'|'l';total_cents:number;unit_cents?:number;category?:string;sourceKey?:string};
+export const receiptChannels=['Mercado','Restaurante','Lanche','Farmácia','Posto','Outro'] as const;
+export const foodProductGroups=['Frutas e verduras','Padaria','Ovos e laticínios','Carnes e congelados','Mercearia','Bebidas','Higiene pessoal','Limpeza','Outros'] as const;
+export type ReceiptProduct={name:string;brand?:string;quantity:number;unit:'un'|'kg'|'l';total_cents:number;unit_cents?:number;category?:string;subcategory?:string;productGroup?:string;sourceKey?:string};
 export type ReceiptAnalysis={text:string;total:string;subtotal:string;discount:string;date:string;merchant:string;paymentMethod:string;confidence:number;products:ReceiptProduct[];productsTotalCents:number;productsConsistent:boolean};
 const excluded=/\b(total|troco|desconto|imposto|tributo|pagamento|valor\s+pago|subtotal)\b/i;
 const amount=(value:string)=>value.replace(/[^\d,.-]/g,'').replace(/([,.])-$/,'$1');
 const decimals=(value:string)=>{const match=amount(value).match(/[,.](\d+)$/);return match?.[1].length??0;};
+const fold=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function titleCase(value:string){return value.toLowerCase().replace(/\b\p{L}/gu,letter=>letter.toUpperCase());}
+function classification(name:string,merchant=''){
+ const value=fold(name),market=/supermerc|mercado|assa[ií]|sendas|atacad|leal|bh\b/.test(fold(merchant)),channel=market?'Mercado':'Outro';
+ if(/manga|banana|maca|ma[cç]a|limao|laranja|uva|morango|abacaxi|abacate|melancia|tomate|batata|cebola|alho|verdura|repolho/.test(value))return {category:'Alimentação',subcategory:'Mercado',productGroup:'Frutas e verduras'};
+ if(/pao|padaria|biscoito|bolo/.test(value))return {category:'Alimentação',subcategory:'Mercado',productGroup:'Padaria'};
+ if(/ovo|leite|queijo|iogurte|manteiga/.test(value))return {category:'Alimentação',subcategory:'Mercado',productGroup:'Ovos e laticínios'};
+ if(/carne|frango|file|coxa|peito|linguica|salsicha|congel/.test(value))return {category:'Alimentação',subcategory:'Mercado',productGroup:'Carnes e congelados'};
+ if(/refrigerante|suco|agua|mineral|cerveja/.test(value))return {category:'Bebidas',subcategory:channel,productGroup:'Bebidas'};
+ if(/sabonete|shampoo|condicionador|desodorante|absorvente|pasta dental/.test(value))return {category:'Higiene pessoal',subcategory:channel,productGroup:'Higiene pessoal'};
+ if(/detergente|sabao|desinfetante|amaciante|esponja/.test(value))return {category:'Limpeza',subcategory:channel,productGroup:'Limpeza'};
+ return {category:'Alimentação',subcategory:channel,productGroup:'Mercearia'};
+}
+function cleanedProduct(name:string,merchant=''){
+ let value=name.replace(/\b(?:kg|un|und|unid|lt|ml)\b\.?$/i,'').replace(/\s+/g,' ').trim();
+ const merchantWords=fold(merchant).split(/[^\p{L}\p{N}]+/u).filter(word=>word.length>=4&&word!=='supermercados'&&word!=='supermercado'&&word!=='ltda');
+ for(const word of merchantWords)value=value.replace(new RegExp(`\\b${word}\\b`,'ig'),' ').replace(/\s+/g,' ').trim();
+ const normal=fold(value);
+ if(/pao\s+frances/.test(normal))return 'Pão francês';
+ if(/^manga\b/.test(normal))return 'Manga';
+ if(/^ovos?\b/.test(normal))return 'Ovos brancos';
+ return titleCase(value);
+}
+export function organizeReceiptProducts(products:ReceiptProduct[],merchant=''){
+ return products.map(product=>{const original=product.name,normalizedName=cleanedProduct(original,merchant),guess=classification(normalizedName,merchant),detectedBrand=product.brand?.trim()||(/^ovos?\s+(decs|dex)\b/i.exec(original)?.[1]??'');return {...product,name:normalizedName,...(detectedBrand?{brand:titleCase(detectedBrand)}:{}),category:product.category&&product.category!=='Outros'?product.category:guess.category,subcategory:product.subcategory||guess.subcategory,productGroup:product.productGroup||guess.productGroup};});
+}
+export function organizeReceiptAnalysis(analysis:ReceiptAnalysis):ReceiptAnalysis{return {...analysis,products:organizeReceiptProducts(analysis.products,analysis.merchant)};}
 function receiptProduct(name:string,quantityText:string,unitText:string,unitTextPrice?:string,totalText?:string,sourceKey?:string):ReceiptProduct|undefined{
  const quantity=Number(quantityText.replace(',','.')),unit=unitText.toLowerCase(),normalized=unit==='g'||unit==='ml'?quantity/1000:quantity;
  const normalizedUnit:ReceiptProduct['unit']=unit.startsWith('k')||unit==='g'?'kg':unit==='l'||unit==='lt'||unit==='ml'?'l':'un';
