@@ -959,6 +959,7 @@ export type Database = {
           owner_user_id: string
           scope: string
           status: string
+          subcategory: string
           version: number
         }
         Insert: {
@@ -975,6 +976,7 @@ export type Database = {
           owner_user_id: string
           scope: string
           status?: string
+          subcategory?: string
           version?: number
         }
         Update: {
@@ -991,6 +993,7 @@ export type Database = {
           owner_user_id?: string
           scope?: string
           status?: string
+          subcategory?: string
           version?: number
         }
         Relationships: [
