@@ -21,8 +21,9 @@ export function ReceiptBatchUpload({api,access,data,refresh}:{api:FinanceAPI;acc
  const check=receiptReconciliation(products,finalAnalysis?.total??'',finalAnalysis?.subtotal??'',finalAnalysis?.discount??'');
  const ready=analyses.length===files.length&&files.length>0&&check.consistent&&!!selectedStore;
  function choose(next:FileList|null){
-  const valid=[...(next??[])].filter(file=>['image/jpeg','image/png','image/webp'].includes(file.type)&&file.size<=10485760);
-  setFiles(valid);setAnalyses([]);setError(valid.length?(next&&valid.length!==next.length?'Algum arquivo foi ignorado: use fotos JPEG, PNG ou WebP de até 10 MB.':''):'Escolha ao menos uma foto do cupom.');setNotice('');
+  const valid=[...(next??[])].filter(file=>['image/jpeg','image/png','image/webp'].includes(file.type)&&file.size<=10485760),limited=valid.slice(0,6),total=limited.reduce((sum,file)=>sum+file.size,0);
+  if(total>20*1024*1024){setFiles([]);setAnalyses([]);setError('Para não sobrecarregar o celular, envie no máximo 20 MB por vez. Faça fotos mais próximas ou divida o cupom em duas compras.');return;}
+  setFiles(limited);setAnalyses([]);setError(limited.length?(next&&(limited.length!==next.length||valid.length!==limited.length)?'Algum arquivo foi ignorado: use no máximo 6 fotos JPEG, PNG ou WebP de até 10 MB.':''):'Escolha ao menos uma foto do cupom.');setNotice('');
  }
  async function read(){
   setBusy(true);setError('');setNotice('');const output:ReceiptAnalysis[]=[];
@@ -50,8 +51,8 @@ export function ReceiptBatchUpload({api,access,data,refresh}:{api:FinanceAPI;acc
   finally{setBusy(false);}
  }
  return <section className="panel" aria-label="Compra com várias fotos"><h2>Compra com várias fotos</h2>
-  <p className="small">Para um cupom longo, tire fotos consecutivas com uma pequena sobreposição. O sistema só remove uma repetição quando o número fiscal do item e os valores são os mesmos.</p>
-  <input aria-label="Fotos da mesma nota" type="file" accept="image/jpeg,image/png,image/webp" multiple capture="environment" onChange={event=>choose(event.target.files)}/>
+  <p className="small">Para um cupom longo, tire fotos consecutivas com uma pequena sobreposição. Máximo: 6 fotos e 20 MB por vez, para não travar o celular. O sistema só remove uma repetição quando o número fiscal do item e os valores são os mesmos.</p>
+  <input aria-label="Fotos da mesma nota" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={event=>{const selected=event.currentTarget.files;event.currentTarget.value='';choose(selected);}}/>
   {files.length>0&&<p>{files.length} foto(s) selecionada(s).</p>}
   <label>Estabelecimento<select value={store} onChange={event=>setStore(event.target.value)}>{stores.map(name=><option key={name}>{name}</option>)}</select></label>
   {store.startsWith('Outro')&&<label>Nome do estabelecimento<input value={otherStore} onChange={event=>setOtherStore(event.target.value)} placeholder="Ex.: Mercado do bairro"/></label>}
