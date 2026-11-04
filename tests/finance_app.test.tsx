@@ -11,6 +11,7 @@ function api():FinanceAPI{return {
  save:vi.fn().mockResolvedValue(undefined),
  upload:vi.fn().mockResolvedValue(undefined),
  download:vi.fn().mockResolvedValue(new Blob()),
+ analyzeReceiptWithAI:vi.fn().mockResolvedValue({}),
  removeDocument:vi.fn().mockResolvedValue(undefined)
 };}
 
@@ -23,6 +24,7 @@ describe('aplicativo financeiro',()=>{
   await user.click(screen.getByRole('checkbox',{name:'Modo simples'}));
   expect(screen.getByRole('button',{name:'Contas'})).toBeInTheDocument();
   await user.click(screen.getByRole('button',{name:'+ Registrar gasto'}));
+  await user.selectOptions(screen.getByRole('combobox',{name:''}),'Alimentação');
   await user.type(screen.getByLabelText('Descrição'),'Mercado');
   await user.type(screen.getByLabelText('Valor (R$)'),'1234');
   expect(screen.getByLabelText('Valor (R$)')).toHaveValue('R$ 12,34');
