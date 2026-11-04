@@ -17,7 +17,10 @@ export default defineConfig(({mode})=>{
    ]
   },
   workbox:{
-   cleanupOutdatedCaches:true,navigateFallback:`${base}index.html`,globIgnores:['**/tesseract/**'],
+   cleanupOutdatedCaches:true,navigateFallback:`${base}index.html`,
+   // Relatórios, planilhas e OCR são carregados somente quando usados. Não os
+   // pré-cache no celular reduz a instalação inicial e evita falta de memória.
+   globIgnores:['**/tesseract/**','**/assets/pdf.worker*','**/assets/pdf-*','**/assets/exceljs*','**/assets/jspdf*','**/assets/html2canvas*','**/assets/esm-*'],
    runtimeCaching:[{urlPattern:({url})=>url.pathname.startsWith(`${base}tesseract/`),handler:'CacheFirst',options:{cacheName:'nossa-casa-ocr-v1',expiration:{maxEntries:4,maxAgeSeconds:31536000}}}]
   }
  })],
