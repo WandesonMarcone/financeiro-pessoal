@@ -44,7 +44,7 @@ const help:Record<string,{title:string;steps:string[];note:string}>={
 function Help({page}:{page:string}){const item=help[page]??{title:'Como usar esta tela',steps:['Use Adicionar para criar um registro.','Toque em Editar para corrigir dados.','Arquivar preserva o histórico sem apagar informações.'],note:'Tudo é sincronizado quando houver conexão.'};return <details className="help-guide"><summary>❔ Ajuda</summary><h2>{item.title}</h2><ol>{item.steps.map(step=><li key={step}>{step}</li>)}</ol><p>{item.note}</p></details>}
 export function FinanceApp({api,access,profile}:{api:FinanceAPI;access:Ready;profile:ReactNode|((navigate:(page:string)=>void,hasPayroll:boolean)=>ReactNode)}){
  const [data,setData]=useState<Snapshot>(emptySnapshot),[loading,setLoading]=useState(true),[page,setPage]=useState('dashboard'),[error,setError]=useState(''),[notice,setNotice]=useState('');
- const [simple,setSimple]=useState(()=>localStorage.getItem('simple:'+access.userId)!=='false');
+
  const [offline,setOffline]=useState(!navigator.onLine),[pending,setPending]=useState<Pending[]>([]);
  const [editor,setEditor]=useState<{table:string;row?:Row;fields?:Field[];extra?:any}|null>(null),[transaction,setTransaction]=useState<any>(null),[purchaseDetails,setPurchaseDetails]=useState<Row|null>(null);
  const [month,setMonth]=useState(today().slice(0,7)),[search,setSearch]=useState('');
@@ -93,15 +93,15 @@ export function FinanceApp({api,access,profile}:{api:FinanceAPI;access:Ready;pro
  async function archive(table:string,row:Row){if(!confirm('Arquivar este registro? Ele continuará preservado no histórico.'))return;await save(table,{archived:true},row);}
  const personalPages=new Set(['cards','payroll_profiles','payroll_statements','commitments']);
  const filtered=active(data,page).filter(r=>(!personalPages.has(page)||own(r))&&(!search||String(r.name??r.description??r.product_key??r.filename??'').toLowerCase().includes(search.toLowerCase())));
- const nav=simple?['dashboard','transactions','shopping_items','documents','profile']:['dashboard','transactions','accounts','shopping_items','documents','budgets','goals','profile'];
+ const nav=['dashboard','transactions','accounts','shopping_items','documents','budgets','goals','profile'];
  return <div className="workspace">
  <div className="workspace-top"><div><p className="eyebrow">{access.householdName}</p><h1>{labels[page]}</h1></div></div>
- <div className="toolbar"><label className="check"><input type="checkbox" checked={simple} onChange={e=>{setSimple(e.target.checked);localStorage.setItem('simple:'+access.userId,String(e.target.checked));setEditor(null);setTransaction(null);setPage('dashboard');}}/>Modo simples</label><span className="badge">{offline?'Offline · dados deste aparelho':'Conectado'}</span><button className="quiet" onClick={()=>{setEditor(null);setTransaction(null);setPage('sync');}}>Fila: {pending.length}</button><button className="quiet" onClick={()=>void load()}>Atualizar</button></div>
+ <div className="toolbar"><span className="badge">{offline?'Offline · dados deste aparelho':'Conectado'}</span><button className="quiet" onClick={()=>{setEditor(null);setTransaction(null);setPage('sync');}}>Fila: {pending.length}</button><button className="quiet" onClick={()=>void load()}>Atualizar</button></div>
  <nav aria-label="Módulos">{nav.map(key=><button key={key} className={page===key?'selected':'quiet'} onClick={()=>{setEditor(null);setTransaction(null);setPage(key);setSearch('');}}>{labels[key]}</button>)}</nav>
  <Help page={page}/>
  {error&&<p role="alert" className="banner error">{error}</p>}{notice&&<p role="status" className="banner">{notice}<button className="quiet" onClick={()=>setNotice('')}>Fechar</button></p>}
  {offline&&<p className="banner">Você está vendo uma cópia local. Novos lançamentos ficam pendentes até a confirmação do servidor.</p>}
- {transaction&&<TransactionForm key={JSON.stringify(transaction)} snapshot={data} userId={access.userId} initial={transaction} simple={simple&&!transaction.due_item_id} onSave={post} onClose={()=>setTransaction(null)} onAttachReceipt={()=>{setTransaction(null);setPage('documents');}}/>}
+ {transaction&&<TransactionForm key={JSON.stringify(transaction)} snapshot={data} userId={access.userId} initial={transaction} simple={false} onSave={post} onClose={()=>setTransaction(null)} onAttachReceipt={()=>{setTransaction(null);setPage('documents');}}/>}
  {editor&&(editor.table==='cards'?<CardEditor initial={editor.row} onSave={values=>save('cards',{...values,...editor.extra},editor.row)} onClose={()=>setEditor(null)}/>:<ResourceEditor title={(editor.row?'Editar ':'Novo registro · ')+(labels[editor.table]??editor.table)} fields={editor.fields??baseFields[editor.table]} initial={editor.row} allowScope={false} onSave={values=>save(editor.table,{...values,...editor.extra},editor.row)} onClose={()=>setEditor(null)}/>)}
  {loading?<p role="status">Carregando seus dados…</p>:<>
  {['dashboard','transactions','reports'].includes(page)&&<div className="filters"><label>Mês<input type="month" value={month} onChange={e=>setMonth(e.target.value)}/></label><label>Pesquisar<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Descrição, categoria ou loja"/></label></div>}
