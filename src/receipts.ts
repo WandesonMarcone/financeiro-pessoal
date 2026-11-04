@@ -139,6 +139,22 @@ async function qrCandidateUrls(file:File){
  return urls;
 }
 export async function prepareImageForAI(file:File,progress:(text:string)=>void):Promise<File>{
+ if(file.type==='application/pdf'){
+  progress('Preparando a página do PDF para leitura…');
+  const pdfjs=await import('pdfjs-dist');const workerUrl=(await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;pdfjs.GlobalWorkerOptions.workerSrc=workerUrl;
+  const pdfDocument=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+  try{
+   if(pdfDocument.numPages>5)throw Error('Use um PDF de até 5 páginas para análise.');
+   const page=await pdfDocument.getPage(1),base=page.getViewport({scale:1}),scale=Math.min(2,1800/Math.max(base.width,base.height)),viewport=page.getViewport({scale});
+   const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(viewport.width));canvas.height=Math.max(1,Math.round(viewport.height));
+   const context=canvas.getContext('2d');if(!context)throw Error('Não foi possível preparar este PDF para leitura.');
+   await page.render({canvas,canvasContext:context,viewport}).promise;
+   let quality=.9,blob:Blob|null=null;
+   while(quality>=.5){blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',quality));if(blob&&blob.size<=3_800_000)break;quality-=.12;}
+   if(!blob||blob.size>4*1024*1024)throw Error('O PDF ficou grande demais para a análise. Use o PDF original do cupom ou uma foto mais próxima.');
+   return new File([blob],file.name.replace(/\.pdf$/i,'')+'.jpg',{type:'image/jpeg',lastModified:file.lastModified});
+  }finally{pdfDocument.cleanup();}
+ }
  if(!file.type.startsWith('image/')||file.size<=3_800_000)return file;
  if(typeof createImageBitmap==='undefined')throw Error('Esta foto é grande demais para análise. Tire outra foto em resolução normal ou escolha “Só guardar arquivo”.');
  progress('Reduzindo a foto para leitura segura…');
