@@ -3,13 +3,13 @@ import {active,cents,money,productKey,today,type Row,type Snapshot} from './doma
 import {foodProductGroups,receiptCategories,receiptChannels,type ReceiptProduct} from './receipts';
 
 type Draft=ReceiptProduct&{key:string;saved:boolean;category:string;brand:string;subcategory:string;productGroup:string};
-export function ReceiptReview({products,expectedTotalCents,document,merchant,date,data,save,onSaveDocument}:{products:ReceiptProduct[];expectedTotalCents:number;document?:Row;merchant:string;date:string;data:Snapshot;save:(table:string,values:any)=>Promise<void>;onSaveDocument?:()=>Promise<Row|undefined>;onCreatePurchase?:(operationId:string)=>Promise<void>}){
+export function ReceiptReview({products,expectedTotalCents,document,merchant,date,data,save,onSaveDocument,onCreatePurchase}:{products:ReceiptProduct[];expectedTotalCents:number;document?:Row;merchant:string;date:string;data:Snapshot;save:(table:string,values:any,row?:Row)=>Promise<void>;onSaveDocument?:()=>Promise<Row|undefined>;onCreatePurchase?:(operationId:string)=>Promise<void>}){
  const [drafts,setDrafts]=useState<Draft[]>([]),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[purchaseSaved,setPurchaseSaved]=useState(Boolean(document?.purchase_confirmed_at));
  useEffect(()=>{setDrafts(products.map((item,index)=>({...item,key:String(index),saved:false,category:item.category??'Outros',brand:item.brand??'',subcategory:item.subcategory??'Outro',productGroup:item.productGroup??'Outros'})));setPurchaseSaved(Boolean(document?.purchase_confirmed_at));setNotice('');setError('');},[products,document?.purchase_confirmed_at]);
  function change(key:string,patch:Partial<Draft>){setDrafts(items=>items.map(item=>item.key===key?{...item,...patch}:item));}
  async function confirm(){
   setBusy(true);setError('');let count=0;
-  try{const target=document?.upload_status==='ready'?document:await onSaveDocument?.();
+  try{let target=document?.upload_status==='ready'?document:await onSaveDocument?.();
    if(!target||target.upload_status!=='ready')throw Error('Não foi possível guardar a nota. Ela continua como rascunho neste aparelho.');
    const existing=new Set(active(data,'receipt_items').filter(row=>row.document_id===target.id).map(row=>[productKey(row.product_key),Number(row.quantity),Number(row.total_cents)].join('|')));
    for(const row of drafts.filter(row=>!row.saved)){
