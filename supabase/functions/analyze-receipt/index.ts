@@ -1,39 +1,29 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const cors={"Access-Control-Allow-Origin":"https://wandesonmarcone.github.io","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Content-Type":"application/json"};
-const schema={type:"object",additionalProperties:false,required:["merchant","date","paymentMethod","subtotal","discount","total","products"],properties:{merchant:{type:"string"},date:{type:"string"},paymentMethod:{type:"string"},subtotal:{type:"string"},discount:{type:"string"},total:{type:"string"},products:{type:"array",items:{type:"object",additionalProperties:false,required:["name","brand","quantity","unit","unitPrice","total","category"],properties:{name:{type:"string"},brand:{type:"string"},quantity:{type:"number"},unit:{type:"string",enum:["un","kg","l"]},unitPrice:{type:"string"},total:{type:"string"},category:{type:"string",enum:["Alimentação","Bebidas","Higiene pessoal","Limpeza","Combustível","Lanche","Saúde","Outros"]}}}}}};
-function json(value:unknown,status=200){return new Response(JSON.stringify(value),{status,headers:cors});}
-function toBase64(bytes:Uint8Array){let value='';for(let start=0;start<bytes.length;start+=0x8000)value+=String.fromCharCode(...bytes.subarray(start,start+0x8000));return btoa(value);}
+const cors = { "Access-Control-Allow-Origin": "https://wandesonmarcone.github.io", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Content-Type": "application/json" };
+const schema = { type: "object", additionalProperties: false, required: ["merchant", "date", "paymentMethod", "subtotal", "discount", "total", "products"], properties: { merchant: { type: "string" }, date: { type: "string" }, paymentMethod: { type: "string" }, subtotal: { type: "string" }, discount: { type: "string" }, total: { type: "string" }, products: { type: "array", items: { type: "object", additionalProperties: false, required: ["name", "brand", "quantity", "unit", "unitPrice", "total", "category"], properties: { name: { type: "string" }, brand: { type: "string" }, quantity: { type: "number" }, unit: { type: "string", enum: ["un", "kg", "l"] }, unitPrice: { type: "string" }, total: { type: "string" }, category: { type: "string", enum: ["Alimentação", "Bebidas", "Higiene pessoal", "Limpeza", "Combustível", "Lanche", "Saúde", "Outros"] } } } } } };
+type ProviderFailure = { provider: string; status: number; code?: string };
+function json(value: unknown, status = 200) { return new Response(JSON.stringify(value), { status, headers: cors }); }
+function toBase64(bytes: Uint8Array) { let value = ""; for (let start = 0; start < bytes.length; start += 0x8000) value += String.fromCharCode(...bytes.subarray(start, start + 0x8000)); return btoa(value); }
+function cleanJson(value: string) { return value.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim(); }
+const prompt = "Leia esta nota fiscal brasileira. Extraia somente o que estiver legível. Responda APENAS JSON válido sem markdown, com merchant,date,paymentMethod,subtotal,discount,total,products. Cada produto precisa ter name,brand,quantity,unit,unitPrice,total,category. Valores em reais com vírgula e duas casas. Produtos não podem ser repetidos: preserve uma linha por item fiscal, inclusive itens iguais em linhas diferentes. Para peso use kg; para unidade use un; para líquidos use l. Extraia a marca separadamente do nome quando ela estiver impressa; se não estiver legível, deixe brand vazia. category deve ser uma de: Alimentação, Bebidas, Higiene pessoal, Limpeza, Combustível, Lanche, Saúde, Outros. Não complete dados incertos: use string vazia ou products vazio. O total deve ser o valor pago.";
+async function readFailure(response: Response, provider: string): Promise<ProviderFailure> { const body = await response.json().catch(() => null) as { error?: { code?: string } } | null; const failure = { provider, status: response.status, code: body?.error?.code }; console.error("Receipt analysis provider failed", provider, failure.status, failure.code ?? "unknown"); return failure; }
+async function analyzeWithOpenAI(key: string, image: string) { const response = await fetch("https://api.openai.com/v1/responses", { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" }, body: JSON.stringify({ model: "gpt-4.1-mini", max_output_tokens: 1800, input: [{ role: "user", content: [{ type: "input_text", text: prompt }, { type: "input_image", image_url: image, detail: "high" }] }], text: { format: { type: "json_schema", name: "receipt_analysis", strict: true, schema } } }) }); if (!response.ok) throw await readFailure(response, "OpenAI"); const output = await response.json() as { output_text?: string }; if (typeof output.output_text !== "string") throw { provider: "OpenAI", status: 502 } satisfies ProviderFailure; return JSON.parse(output.output_text); }
+async function analyzeWithCompatibleApi(provider: string, endpoint: string, key: string, model: string, image: string) { const response = await fetch(endpoint, { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", ...(provider === "OpenRouter" ? { "HTTP-Referer": "https://wandesonmarcone.github.io/financeiro-pessoal/", "X-Title": "Financeiro Pessoal" } : {}) }, body: JSON.stringify({ model, temperature: 0, max_tokens: 1800, response_format: { type: "json_object" }, messages: [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: image, detail: "high" } }] }] }) }); if (!response.ok) throw await readFailure(response, provider); const output = await response.json() as { choices?: Array<{ message?: { content?: string } }> }; const content = output.choices?.[0]?.message?.content; if (typeof content !== "string") throw { provider, status: 502 } satisfies ProviderFailure; return JSON.parse(cleanJson(content)); }
 
-Deno.serve(async(req)=>{
- if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
- if(req.method!=='POST')return json({error:'Método não permitido.'},405);
- try{
-  const authorization=req.headers.get('Authorization');if(!authorization)return json({error:'Entre novamente para analisar uma nota.'},401);
-  const keys=JSON.parse(Deno.env.get('SUPABASE_PUBLISHABLE_KEYS')??'{}');
-  const client=createClient(Deno.env.get('SUPABASE_URL')!,keys.default??Deno.env.get('SUPABASE_ANON_KEY')!,{global:{headers:{Authorization:authorization}}});
-  const {data:{user},error:userError}=await client.auth.getUser();if(userError||!user)return json({error:'Sessão inválida.'},401);
-  const {data:membership,error:membershipError}=await client.from('memberships').select('household_id').eq('user_id',user.id).eq('status','active').maybeSingle();
-  if(membershipError||!membership)return json({error:'Acesso à família não autorizado.'},403);
-  const form=await req.formData(),file=form.get('receipt');if(!(file instanceof File)||!file.type.startsWith('image/')||file.size>4*1024*1024)return json({error:'Envie uma imagem de nota com até 4 MB.'},400);
-  const key=Deno.env.get('OPENAI_API_KEY');if(!key)return json({error:'A análise por IA ainda não está configurada.'},503);
-  const prompt='Leia esta nota fiscal brasileira. Extraia somente o que estiver legível. Valores em reais com vírgula e duas casas. Produtos não podem ser repetidos: preserve uma linha por item fiscal, inclusive itens iguais em linhas diferentes. Para peso use kg; para unidade use un; para líquidos use l. Extraia a marca separadamente do nome do produto, quando ela estiver impressa; se não estiver legível, deixe brand vazia. Classifique cada item em uma das categorias fornecidas. Não complete dados incertos: use string vazia ou produtos vazios. O total deve ser o valor pago.';
-  const response=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4.1-mini',max_output_tokens:1800,input:[{role:'user',content:[{type:'input_text',text:prompt},{type:'input_image',image_url:`data:${file.type};base64,${toBase64(new Uint8Array(await file.arrayBuffer()))}`,detail:'high'}]}],text:{format:{type:'json_schema',name:'receipt_analysis',strict:true,schema}}})});
-  if(!response.ok){
-   const failure=await response.json().catch(()=>null) as {error?:{code?:string;message?:string}}|null;
-   const code=failure?.error?.code;
-   console.error('OpenAI receipt analysis failed',response.status,code??'unknown');
-   if(response.status===429){
-    const error=code==='insufficient_quota'
-     ?'A chave da IA está sem créditos ou atingiu a cota da OpenAI. Verifique Billing e Usage da conta usada nesta chave; sua foto foi preservada e você pode tentar novamente depois.'
-     :'A IA recebeu muitas solicitações em pouco tempo. Aguarde um minuto e tente novamente; sua foto foi preservada.';
-    return json({error,code:'ai_limit'},429);
-   }
-   if(response.status===401||response.status===403)return json({error:'A configuração da IA foi recusada. Verifique a chave configurada no Supabase.'},503);
-   return json({error:'A IA não conseguiu analisar esta foto agora. Tente novamente em alguns minutos; sua foto foi preservada.'},502);
-  }
-  const output=await response.json(),raw=output.output_text;if(typeof raw!=='string')return json({error:'A IA não retornou uma leitura utilizável.'},502);
-  return json(JSON.parse(raw));
- }catch(error){console.error('Receipt analysis error',error instanceof Error?error.message:'unknown');return json({error:'Não foi possível analisar esta nota.'},500);}
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return json({ error: "Método não permitido." }, 405);
+  try {
+    const authorization = req.headers.get("Authorization"); if (!authorization) return json({ error: "Entre novamente para analisar uma nota." }, 401);
+    const keys = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}"); const client = createClient(Deno.env.get("SUPABASE_URL")!, keys.default ?? Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: authorization } } });
+    const { data: { user }, error: userError } = await client.auth.getUser(); if (userError || !user) return json({ error: "Sessão inválida." }, 401);
+    const { data: membership, error: membershipError } = await client.from("memberships").select("household_id").eq("user_id", user.id).eq("status", "active").maybeSingle(); if (membershipError || !membership) return json({ error: "Acesso à família não autorizado." }, 403);
+    const form = await req.formData(); const file = form.get("receipt"); if (!(file instanceof File) || !file.type.startsWith("image/") || file.size > 4 * 1024 * 1024) return json({ error: "Envie uma imagem de nota com até 4 MB." }, 400);
+    const image = `data:${file.type};base64,${toBase64(new Uint8Array(await file.arrayBuffer()))}`; const failures: ProviderFailure[] = [];
+    const providers = [{ name: "OpenAI", key: Deno.env.get("OPENAI_API_KEY"), run: (key: string) => analyzeWithOpenAI(key, image) }, { name: "OpenRouter", key: Deno.env.get("OPENROUTER_API_KEY"), run: (key: string) => analyzeWithCompatibleApi("OpenRouter", "https://openrouter.ai/api/v1/chat/completions", key, "meta-llama/llama-4-scout", image) }, { name: "Groq", key: Deno.env.get("GROQ_API_KEY"), run: (key: string) => analyzeWithCompatibleApi("Groq", "https://api.groq.com/openai/v1/chat/completions", key, "meta-llama/llama-4-scout-17b-16e-instruct", image) }];
+    for (const provider of providers) { if (!provider.key) continue; try { return json(await provider.run(provider.key)); } catch (failure) { failures.push(failure as ProviderFailure); } }
+    const unavailable = failures.some((failure) => failure.status === 429 || failure.status === 401 || failure.status === 403); return json({ error: unavailable ? "As IAs configuradas não estão disponíveis agora. Sua foto continua apenas neste aparelho; tente novamente em alguns minutos." : "A IA não conseguiu analisar esta foto agora. Sua foto continua apenas neste aparelho.", code: "ai_unavailable" }, unavailable ? 503 : 502);
+  } catch (error) { console.error("Receipt analysis error", error instanceof Error ? error.message : "unknown"); return json({ error: "Não foi possível analisar esta nota." }, 500); }
 });
