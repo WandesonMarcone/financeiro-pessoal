@@ -11,12 +11,13 @@ export function ReceiptReview({products,expectedTotalCents,document,merchant,dat
   setBusy(true);setError('');let count=0;
   try{let target=document?.upload_status==='ready'?document:await onSaveDocument?.();
    if(!target||target.upload_status!=='ready')throw Error('Não foi possível guardar a nota. Ela continua como rascunho neste aparelho.');
-   const existing=new Set(active(data,'receipt_items').filter(row=>row.document_id===target.id).map(row=>[productKey(row.product_key),Number(row.quantity),Number(row.total_cents)].join('|')));
+   const readyTarget=target;
+   const existing=new Set(active(data,'receipt_items').filter(row=>row.document_id===readyTarget.id).map(row=>[productKey(row.product_key),Number(row.quantity),Number(row.total_cents)].join('|')));
    for(const row of drafts.filter(row=>!row.saved)){
    const signature=[productKey(row.name),row.quantity,row.total_cents].join('|');
    if(existing.has(signature)){setDrafts(rows=>rows.map(item=>item.key===row.key?{...item,saved:true}:item));continue;}
    const unit_cents=row.unit_cents??((row.unit==='kg'||row.unit==='l')?Math.round(row.total_cents/row.quantity):null);
-   await save('receipt_items',{document_id:target.id,scope:target.scope,product_key:row.name,brand:row.brand,quantity:row.quantity,unit:row.unit,total_cents:row.total_cents,unit_cents,category:row.category,subcategory:row.subcategory,product_group:row.productGroup,extraction_source:'ai',merchant,purchased_on:date||today()});
+   await save('receipt_items',{document_id:readyTarget.id,scope:readyTarget.scope,product_key:row.name,brand:row.brand,quantity:row.quantity,unit:row.unit,total_cents:row.total_cents,unit_cents,category:row.category,subcategory:row.subcategory,product_group:row.productGroup,extraction_source:'ai',merchant,purchased_on:date||today()});
    existing.add(signature);setDrafts(rows=>rows.map(item=>item.key===row.key?{...item,saved:true}:item));count++;
   }
    if(!purchaseSaved&&onCreatePurchase){const operationId=target.purchase_operation_id||crypto.randomUUID();if(!target.purchase_operation_id){await save('documents',{purchase_operation_id:operationId},target);target={...target,purchase_operation_id:operationId};}await onCreatePurchase(operationId);await save('documents',{purchase_confirmed_at:new Date().toISOString()},target);setPurchaseSaved(true);}
