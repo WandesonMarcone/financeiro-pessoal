@@ -28,7 +28,14 @@ export function financeAPI(client:SupabaseClient<Database>){
   if(file.size>4*1024*1024)throw Error('Para análise por IA, use uma foto de até 4 MB.');
   const body=new FormData();body.append('receipt',file,file.name);
   const {data,error}=await db.functions.invoke('analyze-receipt',{body});
-  if(error)throw Error(error.message);
+  if(error){
+   const response=(error as {context?:unknown}).context;
+   if(response instanceof Response){
+    const failure=await response.json().catch(()=>null) as {error?:unknown}|null;
+    if(typeof failure?.error==='string')throw Error(failure.error);
+   }
+   throw Error('Não foi possível falar com a análise por IA agora. Sua foto continua guardada; tente novamente.');
+  }
   if(!data||typeof data!=='object')throw Error('A IA não retornou uma análise válida.');
   return data;
  }
