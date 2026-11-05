@@ -4,9 +4,10 @@ import { CurrencyInput } from './CurrencyInput';
 import {CardVisual} from './CardVisual';
 
 const standardExpenseGroups:Record<string,string[]>={
-  'Alimentação':['Mercado','Lanche','Restaurante / delivery','Padaria'],
+  'Mercado':['Supermercado','Feira / hortifruti','Padaria','Açougue','Atacado'],
+  'Alimentação fora':['Restaurante','Lanche','Delivery','Café / padaria'],
   'Transporte':['Gasolina','Uber / aplicativo','Ônibus / metrô','Viagem / passagem','Estacionamento / pedágio','Manutenção'],
-  'Higiene pessoal':['Mercado','Farmácia','Perfumaria'],
+  'Cuidados pessoais':['Produtos de higiene','Cabelo / barbearia','Estética / beleza','Farmácia'],
   'Limpeza':['Mercado','Casa / utilidades'],
   'Moradia':['Condomínio','Água','Energia','Internet','Financiamento / aluguel','Manutenção'],
   'Saúde':['Farmácia','Consulta / exame','Plano de saúde'],
@@ -40,9 +41,9 @@ export function TransactionForm({ snapshot, userId, initial = {}, onSave, onClos
   const detailOptions=[...new Set([...(standardExpenseGroups[category]??[]),...customCategories.filter(item=>String(item.parent_name)===category).map(item=>String(item.name))])];
   const fuel=kind==='expense'&&category==='Transporte'&&subcategory==='Gasolina';
   const descriptionHints:Record<string,string>={
-    'Alimentação':'Ex.: Compra no Supermercado BH',
-    'Lanche':'Ex.: Lanche no trabalho',
-    'Higiene pessoal':'Ex.: Farmácia / higiene pessoal',
+    'Mercado':'Ex.: Feira do bairro ou Supermercado BH',
+    'Alimentação fora':'Ex.: Restaurante ou lanche no trabalho',
+    'Cuidados pessoais':'Ex.: Salão, barbeiro ou perfumaria',
     'Limpeza':'Ex.: Produtos de limpeza',
     'Combustível':'Ex.: Gasolina comum',
     'Moradia':'Ex.: Condomínio',
@@ -115,7 +116,7 @@ export function TransactionForm({ snapshot, userId, initial = {}, onSave, onClos
       {advanced && !initial.due_item_id && <label>Tipo<select value={kind} onChange={e => setKind(e.target.value)}><option value="expense">Despesa / compra</option><option value="income">Receita</option><option value="transfer">Transferência</option><option value="card_payment">Pagamento de fatura</option></select></label>}
 
       {kind==='expense'&&<fieldset className="quick-methods"><legend>1. Qual é este gasto?</legend><label>Grupo principal<select name="category" required value={category} onChange={event=>{setCategory(event.target.value);setSubcategory('');}}><option value="">Escolha o grupo</option>{expenseCategories.map(item=><option key={item} value={item}>{item}</option>)}</select></label>{category&&detailOptions.length>0&&<label>Tipo de gasto<select name="subcategory" value={subcategory} onChange={event=>setSubcategory(event.target.value)}><option value="">Escolha o tipo (opcional)</option>{detailOptions.map(item=><option key={item} value={item}>{item}</option>)}</select></label>}{category&&<p className="small">{fuel?'Informe os dados do abastecimento; o valor será conferido automaticamente.':`Você está registrando em ${category}${subcategory?` · ${subcategory}`:''}.`}</p>}</fieldset>}
-      {kind==='expense'&&<label>Onde comprou ou pagou? (opcional)<input name="merchant" placeholder={fuel?'Ex.: Posto X':category==='Alimentação'?'Ex.: Supermercado BH':'Ex.: estabelecimento'} defaultValue={initial.merchant ?? ''}/></label>}
+      {kind==='expense'&&<label>Onde comprou ou pagou? (opcional)<input name="merchant" placeholder={fuel?'Ex.: Posto X':category==='Mercado'?'Ex.: feira, sacolão ou supermercado':'Ex.: estabelecimento'} defaultValue={initial.merchant ?? ''}/></label>}
       {fuel&&<><label>Litros abastecidos<input name="fuel_liters" required inputMode="decimal" placeholder="Ex.: 32,45" defaultValue={initial.fuel_liters??''}/></label><label>Preço por litro (R$)<CurrencyInput name="fuel_unit_price" required defaultValue={initial.fuel_unit_cents?(Number(initial.fuel_unit_cents)/100).toFixed(2).replace('.',','):''}/></label><label>Posto (opcional)<input name="fuel_station" placeholder="Ex.: Posto X" defaultValue={initial.fuel_station??''}/></label><label>Quilometragem (opcional)<input name="fuel_odometer" inputMode="numeric" defaultValue={initial.fuel_odometer??''}/></label><p className="small">Litros × preço por litro precisam conferir com o valor total. O abastecimento continua sendo uma única despesa.</p></>}
       <label>{category==='Moradia'?'Qual conta ou despesa?':'Descrição'}<input name="description" required maxLength={250} placeholder={fuel?'Ex.: Gasolina comum':descriptionHints[category]??'Ex.: Compra no mercado'} defaultValue={initial.description ?? ''} /></label>
       <label>Valor (R$)<CurrencyInput aria-label="Valor (R$)" name="amount" required defaultValue={initial.amount_cents ? (initial.amount_cents / 100).toFixed(2) : ''} /><small>Digite só os números: 1000 vira R$ 10,00.</small></label>
