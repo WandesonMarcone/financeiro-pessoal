@@ -15,6 +15,7 @@ export function financeAPI(client:SupabaseClient<Database>){
   }));return result;
  },
  async post(id:string,payload:any){const operationId=id as `${string}-${string}-${string}-${string}-${string}`;const {error}=await db.rpc('post_transaction',{operation_id:operationId,payload});if(error)throw Error(error.message);},
+ async editTransactionDetails(transaction:Row,values:{description:string;category:string;subcategory:string;merchant:string;occurred_on:string}){const {error}=await db.rpc('edit_transaction_details',{transaction_id:transaction.id,expected_version:transaction.version,new_description:values.description,new_category:values.category,new_subcategory:values.subcategory,new_merchant:values.merchant,new_occurred_on:values.occurred_on});if(error)throw Error(error.message);},
  async save(table:string,data:Row,version?:number){
   if(!TABLES.includes(table as any)||['transactions','ledger_entries','card_installments','invoice_payments','audit_events'].includes(table))throw Error('Tabela não editável');
   let q=version===undefined?db.from(table).insert(data):db.from(table).update(data).eq('id',data.id).eq('version',version);
