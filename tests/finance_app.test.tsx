@@ -8,6 +8,7 @@ import type {FinanceAPI} from '../src/finance';
 function api():FinanceAPI{return {
  load:vi.fn().mockResolvedValue(emptySnapshot()),
  post:vi.fn().mockResolvedValue(undefined),
+ editTransactionDetails:vi.fn().mockResolvedValue(undefined),
  save:vi.fn().mockResolvedValue(undefined),
  upload:vi.fn().mockResolvedValue(undefined),
  download:vi.fn().mockResolvedValue(new Blob()),
